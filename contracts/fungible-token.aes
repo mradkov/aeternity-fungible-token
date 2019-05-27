@@ -24,7 +24,7 @@ contract FungibleToken =
     Chain.event(Transfer(Call.caller, to, value))
 
   public stateful function approve(spender: address, value: int) = 
-    require(value > 0, "The provided value cannot be sub zero.")
+    require(value >= 0, "The provided value cannot be sub zero.")
     require(spender != #0, "Invalid spender address.")
     put(state{allowed[(Call.caller, spender)] = value})
     Chain.event(Approval(Call.caller, spender, state.allowed[(Call.caller, spender)]))
@@ -77,8 +77,8 @@ contract FungibleToken =
     require(Call.caller == state.owner, "Only owner can mint new tokens!")
 
   private stateful function transfer'(from: address, to: address, value: int) =
-    require(value > 0, "The provided value cannot be sub zero")
-    require(value =< balance_of(from), "Not enough balance.")
+    require(value >= 0, "The provided value cannot be sub zero")
+    require(value < balance_of(from), "Not enough balance.")
     require(to != #0, "The provided address is invalid.")
     put(state{  balances[from] = balance_of(from) - value
         , balances[to] = balance_of(to) + value })
