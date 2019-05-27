@@ -19,7 +19,7 @@ const Deployer = require('forgae').Deployer;
 const deploy = async (network, privateKey, compiler) => {
     let deployer = new Deployer(network, privateKey, compiler)
 
-    await deployer.deploy("./contracts/ExampleContract.aes")
+    await deployer.deploy("./contracts/fungible-token.aes")
 };
 
 module.exports = {
