@@ -1,0 +1,16 @@
+{
+  "name": "forgae-project",
+  "version": "1.0.0",
+  "description": "This is the default package.json generated for your project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aeternity/aepp-sdk": "3.3.0",
+    "forgae": "1.4.1",
+    "yarn": "1.16.0"
+  }
+}
