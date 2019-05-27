@@ -1,6 +1,7 @@
 contract FungibleToken =
   record state = {
-    owner            : address, 
+    owner            : address,
+    name             : string,
     total_supply     : int,
     balances         : map(address, int),
     allowed          : map((address, address), int)}
@@ -8,11 +9,15 @@ contract FungibleToken =
   datatype event = Transfer(indexed address, indexed address, indexed int)
     | Approval(indexed address, indexed address, indexed int) 
 
-  public stateful function init() = {
+  public stateful function init(name: string, total_supply : int) = {
     owner = Call.caller,
-    total_supply = 0,
+    name = name,
+    total_supply = total_supply,
     balances = {},
     allowed = {}}
+
+  public function name() : string =
+    state.name
 
   public stateful function transfer(to: address, value: int) =
     transfer'(Call.caller, to, value)
