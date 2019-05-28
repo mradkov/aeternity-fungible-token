@@ -1,24 +1,30 @@
 contract FungibleToken =
-  record state = {
-    owner            : address,
-    name             : string,
-    symbol           : string,
-    total_supply     : int,
-    decimals         : int,
-    balances         : map(address, int),
-    allowed          : map((address, address), int)}
 
-  datatype event = Transfer(indexed address, indexed address, indexed int)
-    | Approval(indexed address, indexed address, indexed int) 
+  type balance = map(address, int)
 
-  public stateful function init(name: string, total_supply : int, decimals : int, symbol : string) = {
-    owner = Call.caller,
-    name = name,
-    symbol = symbol,
-    total_supply = total_supply,
-    decimals = decimals,
-    balances = {},
-    allowed = {}}
+  type allowance = map((address, address), int)
+
+  record state =
+    { owner        : address
+    , name         : string
+    , symbol       : string
+    , total_supply : int
+    , decimals     : int
+    , balances     : balance
+    , allowances   : allowance }
+
+  datatype event =
+    Transfer(indexed address, indexed address, indexed int)
+    | Approval(indexed address, indexed address, indexed int)
+
+  public stateful function init(name: string, total_supply : int, decimals : int, symbol : string) =
+    { owner        = Call.caller,
+      name         = name,
+      symbol       = symbol,
+      total_supply = total_supply,
+      decimals     = decimals,
+      balances     = {},
+      allowances   = {} }
 
   public function name() : string =
     state.name
@@ -33,10 +39,10 @@ contract FungibleToken =
     transfer'(Call.caller, to, value)
     Chain.event(Transfer(Call.caller, to, value))
 
-  public stateful function approve(spender: address, value: int) = 
+  public stateful function approve(spender: address, value: int) =
     require(value >= 0, "The provided value cannot be sub zero.")
-    put(state{allowed[(Call.caller, spender)] = value})
-    Chain.event(Approval(Call.caller, spender, state.allowed[(Call.caller, spender)]))
+    put(state{allowances[(Call.caller, spender)] = value})
+    Chain.event(Approval(Call.caller, spender, state.allowances[(Call.caller, spender)]))
 
   public function total_supply() : int =
     state.total_supply
@@ -44,40 +50,36 @@ contract FungibleToken =
   public function balance_of(owner: address) : int =
     Map.lookup_default(owner, state.balances, 0)
 
-  public function allowance(owner: address, spender: address) : int = 
-    Map.lookup_default((owner, spender), state.allowed, 0)
+  public function allowance(owner: address, spender: address) : int =
+    Map.lookup_default((owner, spender), state.allowances, 0)
 
   public function get(addr: address) : int =
-    Map.lookup_default((addr, Call.caller), state.allowed, 0)
-  
+    Map.lookup_default((addr, Call.caller), state.allowances, 0)
+
   public stateful function transfer_from(from: address, to: address, value: int) =
-    require(Map.lookup_default((from, Call.caller), state.allowed, 0) >= value
-          , "The provided value is larger than what is allowed.")
-    put(state{allowed[(from, Call.caller)] = Map.lookup_default((from, Call.caller), state.allowed, 0) - value}) 
+    require(Map.lookup_default((from, Call.caller), state.allowances, 0) >= value
+          , "The provided value is larger than what is allowances.")
+    put(state{allowances[(from, Call.caller)] = Map.lookup_default((from, Call.caller), state.allowances, 0) - value})
     transfer'(from, to, value)
     Chain.event(Transfer(from, to, value))
 
   public stateful function increase_allowance(spender: address, added_value: int) =
-    put(state{allowed[(Call.caller, spender)] = state.allowed[(Call.caller, spender)] + added_value})
-    Chain.event(Approval(Call.caller, spender, state.allowed[(Call.caller, spender)]))
+    put(state{allowances[(Call.caller, spender)] = state.allowances[(Call.caller, spender)] + added_value})
+    Chain.event(Approval(Call.caller, spender, state.allowances[(Call.caller, spender)]))
 
   public stateful function decrease_allowance(spender: address, subtracted_value: int) =
-    put(state{allowed[(Call.caller, spender)] = state.allowed[(Call.caller, spender)] - subtracted_value})
-    Chain.event(Approval(Call.caller, spender, state.allowed[(Call.caller, spender)]))
+    put(state{allowances[(Call.caller, spender)] = state.allowances[(Call.caller, spender)] - subtracted_value})
+    Chain.event(Approval(Call.caller, spender, state.allowances[(Call.caller, spender)]))
 
   public stateful function mint(account: address, value: int) =
     only_owner()
-    put(state{total_supply = state.total_supply + value
-        ,  balances[account] = balance_of(account) + value})
+    put(state{total_supply = state.total_supply + value, balances[account] = balance_of(account) + value})
 
   public stateful function burn(value: int) =
     require(balance_of(Call.caller) >= value, "The value provided for burning is less than account's balance.")
-    put(state{total_supply = state.total_supply - value
-        ,  balances[Call.caller] = balance_of(Call.caller) - value})
+    put(state{total_supply = state.total_supply - value, balances[Call.caller] = balance_of(Call.caller) - value})
 
-  private function require(expression : bool, error : string) =
-    if(!expression) 
-      abort(error)
+  // INTERNAL FUNCTIONS
 
   private function only_owner() =
     require(Call.caller == state.owner, "Only owner can mint new tokens!")
@@ -85,5 +87,10 @@ contract FungibleToken =
   private stateful function transfer'(from: address, to: address, value: int) =
     require(value >= 0, "The provided value cannot be sub zero")
     require(value < balance_of(from), "Not enough balance.")
-    put(state{  balances[from] = balance_of(from) - value
-        , balances[to] = balance_of(to) + value })
+    put(state{  balances[from] = balance_of(from) - value, balances[to] = balance_of(to) + value })
+
+  // GENERIC HELPER FUNCTIONS
+
+  private function require(expression : bool, error : string) =
+    if(!expression)
+      abort(error)
