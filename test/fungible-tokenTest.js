@@ -26,10 +26,7 @@ const config = {
 
 describe('Fungible Token Contract', () => {
 
-    let owner;
-    let options = {
-        ttl: config.ttl
-    }
+    let owner, contract;
 
     before(async () => {
         const ownerKeyPair = wallets[0];
@@ -47,11 +44,9 @@ describe('Fungible Token Contract', () => {
     it('Deploying Example Contract', async () => {
         let contractSource = utils.readFileRelative('./contracts/fungible-token.aes', "utf-8"); // Read the aes file
 
-        const compiledContract = await owner.contractCompile(contractSource, { // Compile it
-        })
-        // Deploy it
-        // [] - empty init state object
-        const deployPromise = compiledContract.deploy([], options);
+        contract = await owner.getContractInstance(contractSource);
+
+        const deployPromise = contract.deploy(["AE Test Token", 100, 0, "AETT"]);
 
         await assert.isFulfilled(deployPromise, 'Could not deploy the Fungible Token Smart Contract'); // Check it is deployed
     })
