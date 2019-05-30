@@ -57,7 +57,7 @@ contract FungibleToken =
     Chain.event(Transfer(Call.caller, to, value))
 
   public stateful function approve(spender: address, value: int) =
-    require(value >= 0, "The provided value cannot be sub zero.")
+    require(value >= 0, "INVALID_VALUE_SUB_ZERO")
     put(state{ allowances[(Call.caller, spender)] = value })
     Chain.event(Allowance(Call.caller, spender, state.allowances[(Call.caller, spender)]))
 
@@ -83,7 +83,7 @@ contract FungibleToken =
     Map.lookup_default((addr, Call.caller), state.allowances, 0)
 
   public stateful function transfer_from(from: address, to: address, value: int) =
-    require(allowance_from(from) >= value, "The provided value is larger than what is allowances.")
+    require(allowance_from(from) >= value, "INSUFFICIENT_ALLOWANCE")
     put(state{ allowances[(from, Call.caller)] = allowance_from(from) - value })
     internal_transfer(from, to, value)
     Chain.event(Transfer(from, to, value))
@@ -101,18 +101,18 @@ contract FungibleToken =
     put(state{ total_supply = state.total_supply + value, balances[account] = balance_of(account) + value })
 
   public stateful function burn(value: int) =
-    require(balance_of(Call.caller) >= value, "The value provided for burning is less than account's balance.")
+    require(balance_of(Call.caller) >= value, "INSUFFICIENT_BALANCE")
     put(state{ total_supply = state.total_supply - value, balances[Call.caller] = balance_of(Call.caller) - value })
     Chain.event(Burn(Call.caller, value))
 
   // INTERNAL FUNCTIONS
 
   private function only_owner() =
-    require(Call.caller == state.owner, "Only owner can mint new tokens!")
+    require(Call.caller == state.owner, "INVALID_CALL_CONTRACT_OWNER")
 
   private stateful function internal_transfer(from: address, to: address, value: int) =
-    require(value >= 0, "The provided value cannot be sub zero")
-    require(value < balance_of(from), "Not enough balance.")
+    require(value >= 0, "INVALID_VALUE_SUB_ZERO")
+    require(value < balance_of(from), "INSUFFICIENT_BALANCE")
     put(state{ balances[from] = balance_of(from) - value, balances[to] = balance_of(to) + value })
 
   // GENERIC HELPER FUNCTIONS
