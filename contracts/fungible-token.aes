@@ -24,7 +24,6 @@ contract FungibleToken =
 
   record allowance_accounts = { from_account : address, for_account : address }
 
-  // allowance from account, for account, with amount
   type allowances = map(allowance_accounts, int)
 
   record meta_info =
@@ -92,13 +91,9 @@ contract FungibleToken =
     put(state{ allowances[allowance_accounts] = value })
     Chain.event(Allowance(Call.caller, for_account, value))
 
-  public stateful function increase_allowance(for_account: address, value_to_add: int) =
+  public stateful function change_allowance(for_account: address, value_change: int) =
     let allowance_accounts = { from_account =  Call.caller, for_account = for_account }
-    internal_change_allowance(allowance_accounts, value_to_add)
-
-  public stateful function decrease_allowance(for_account: address, value_to_substract: int) =
-    let allowance_accounts = { from_account =  Call.caller, for_account = for_account }
-    internal_change_allowance(allowance_accounts, -value_to_substract)
+    internal_change_allowance(allowance_accounts, value_change)
 
 
   public stateful function mint(account: address, value: int) =
