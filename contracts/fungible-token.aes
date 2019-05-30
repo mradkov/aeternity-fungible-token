@@ -98,26 +98,16 @@ contract FungibleToken =
 
   public stateful function mint(account: address, value: int) =
     require_owner()
-    let balance = balance_or_zero(account)
-    put(state{ total_supply = state.total_supply + value, balances[account] = balance + value })
+    put(state{ total_supply = state.total_supply + value, balances[account = 0] @ b = b + value })
 
   public stateful function burn(value: int) =
-    let balance = require_balance(Call.caller, value)
-    put(state{ total_supply = state.total_supply - value, balances[Call.caller] = balance - value })
+    require_balance(Call.caller, value)
+    put(state{ total_supply = state.total_supply - value, balances[Call.caller] @ b = b - value })
 
   // INTERNAL FUNCTIONS
 
-  private function balance_or_zero(account : address) : int =
-    switch(balance(account))
-      Some(balance) => balance
-      None => 0
-
   private function require_owner() =
     require(Call.caller == state.owner, "ONLY_OWNER_CALL_ALLOWED")
-
-  private function require_allowance_existent(allowance_accounts : allowance_accounts) =
-    switch(allowance(allowance_accounts))
-      None => abort("ALLOWANCE_NOT_EXISTENT")
 
   private function require_allowance_not_existent(allowance_accounts : allowance_accounts) =
     switch(allowance(allowance_accounts))
@@ -133,18 +123,17 @@ contract FungibleToken =
         allowance
       None => abort("ALLOWANCE_NOT_EXISTENT")
 
-  private function require_balance(account : address, value : int) : int =
+  private function require_balance(account : address, value : int) =
     switch(balance(account))
       Some(balance) =>
         require(balance >= value, "ACCOUNT_INSUFFICIENT_BALANCE")
-        balance
       None => abort("BALANCE_ACCOUNT_NOT_EXISTENT")
 
   private stateful function internal_transfer(from_account: address, to_account: address, value: int) =
     require_non_negative_value(value)
-    let balance_from = require_balance(from_account, value)
-    let balance_to = balance_or_zero(to_account)
-    put(state{ balances[from_account] = balance_from - value, balances[to_account] = balance_to + value })
+    require_balance(from_account, value)
+    put(state{ balances[from_account] @ b = b - value })
+    put(state{ balances[to_account = 0] @ b = b + value })
     Chain.event(Transfer(from_account, to_account, value))
 
   private stateful function internal_change_allowance(allowance_accounts : allowance_accounts, value_change : int) =
