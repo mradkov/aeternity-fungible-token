@@ -48,6 +48,15 @@ contract FungibleToken =
   public function total_supply() : int =
     state.total_supply
 
+  public function owner() : address =
+    state.owner
+
+  public function balances() : balance =
+    state.balances
+
+  public function allowances() : allowance =
+    state.allowances
+
   public function balance_of(owner: address) : int =
     Map.lookup_default(owner, state.balances, 0)
 
