@@ -57,6 +57,15 @@ contract FungibleToken =
   public function total_supply() : int =
     state.total_supply
 
+  public function owner() : address =
+    state.owner
+
+  public function balances() : balances =
+    state.balances
+
+  public function allowances() : allowances =
+    state.allowances
+
 
   public function balance(owner: address) : option(int) =
     Map.lookup(owner, state.balances)
@@ -68,30 +77,13 @@ contract FungibleToken =
     allowance({ from_account = from_account, for_account = Call.caller })
 
 
-  public stateful function transfer(to: address, value: int) =
-    internal_transfer(Call.caller, to, value)
-    Chain.event(Transfer(Call.caller, to, value))
+  public stateful function transfer(to_account: address, value: int) =
+    internal_transfer(Call.caller, to_account, value)
 
   public stateful function transfer_allowance(from_account: address, to_account: address, value: int) =
     let allowance_accounts = { from_account = from_account, for_account = Call.caller }
-    let allowance = require_allowance(allowance_accounts, value)
-    let new_allowance = allowance - value
-    put(state{ allowances[allowance_accounts] = new_allowance })
+    internal_change_allowance(allowance_accounts, -value)
     internal_transfer(from_account, to_account, value)
-    Chain.event(Allowance(from_account, Call.caller, new_allowance))
-    Chain.event(Transfer(from_account, to_account, value))
-
-  public function owner() : address =
-    state.owner
-
-  public function balances() : balances =
-    state.balances
-
-  public function allowances() : allowances =
-    state.allowances
-
-  public function balance_of(owner: address) : int =
-    Map.lookup_default(owner, state.balances, 0)
 
   public stateful function create_allowance(for_account: address, value: int) =
     require_non_negative_value(value)
@@ -100,21 +92,13 @@ contract FungibleToken =
     put(state{ allowances[allowance_accounts] = value })
     Chain.event(Allowance(Call.caller, for_account, value))
 
-  public stateful function increase_allowance(for_account: address, added_value: int) =
-    require_non_negative_value(added_value)
+  public stateful function increase_allowance(for_account: address, value_to_add: int) =
     let allowance_accounts = { from_account =  Call.caller, for_account = for_account }
-    let allowance = require_allowance(allowance_accounts, 0)
-    let new_allowance = allowance + added_value
-    put(state{ allowances[allowance_accounts] = new_allowance })
-    Chain.event(Allowance(Call.caller, for_account, new_allowance))
+    internal_change_allowance(allowance_accounts, value_to_add)
 
-  public stateful function decrease_allowance(for_account: address, subtracted_value: int) =
-    require_non_negative_value(subtracted_value)
+  public stateful function decrease_allowance(for_account: address, value_to_substract: int) =
     let allowance_accounts = { from_account =  Call.caller, for_account = for_account }
-    let allowance = require_allowance(allowance_accounts, subtracted_value)
-    let new_allowance = allowance - subtracted_value
-    put(state{ allowances[allowance_accounts] = new_allowance })
-    Chain.event(Allowance(Call.caller, for_account, new_allowance))
+    internal_change_allowance(allowance_accounts, -value_to_substract)
 
 
   public stateful function mint(account: address, value: int) =
@@ -166,6 +150,14 @@ contract FungibleToken =
     let balance_from = require_balance(from_account, value)
     let balance_to = balance_or_zero(to_account)
     put(state{ balances[from_account] = balance_from - value, balances[to_account] = balance_to + value })
+    Chain.event(Transfer(from_account, to_account, value))
+
+  private stateful function internal_change_allowance(allowance_accounts : allowance_accounts, value_change : int) =
+    let allowance = require_allowance(allowance_accounts, value_change)
+    let new_allowance = allowance + value_change
+    require_non_negative_value(new_allowance)
+    put(state{ allowances[allowance_accounts] = new_allowance })
+    Chain.event(Allowance(allowance_accounts.from_account, allowance_accounts.for_account, new_allowance))
 
   // GENERIC HELPER FUNCTIONS
 
