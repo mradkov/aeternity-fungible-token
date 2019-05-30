@@ -5,14 +5,17 @@ contract FungibleToken =
   // allowance from account, for account, with amount
   type allowance = map((address, address), int)
 
+  record meta_info =
+    { name     : string
+    , symbol   : string
+    , decimals : int }
+
   record state =
     { owner        : address
-    , name         : string
-    , symbol       : string
     , total_supply : int
-    , decimals     : int
     , balances     : balance
-    , allowances   : allowance }
+    , allowances   : allowance
+    , meta_info    : meta_info }
 
   datatype event =
     Transfer(indexed address, indexed address, indexed int)
@@ -20,21 +23,13 @@ contract FungibleToken =
 
   public stateful function init(name: string, total_supply : int, decimals : int, symbol : string) =
     { owner        = Call.caller,
-      name         = name,
-      symbol       = symbol,
       total_supply = total_supply,
-      decimals     = decimals,
       balances     = {},
-      allowances   = {} }
+      allowances   = {},
+      meta_info    = { name = name, symbol = symbol, decimals = decimals } }
 
-  public function name() : string =
-    state.name
-
-  public function symbol() : string =
-    state.symbol
-
-  public function decimals() : int =
-    state.decimals
+  public function meta_info() : meta_info =
+    state.meta_info
 
   public stateful function transfer(to: address, value: int) =
     internal_transfer(Call.caller, to, value)
