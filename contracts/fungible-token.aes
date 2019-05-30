@@ -36,7 +36,8 @@ contract FungibleToken =
 
   datatype event =
     Transfer(indexed address, indexed address, indexed int)
-    | Approval(indexed address, indexed address, indexed int)
+    | Allowance(indexed address, indexed address, indexed int)
+    | Burn(indexed address, indexed int)
 
   public stateful function init(name: string, total_supply : int, decimals : int, symbol : string) =
     { owner        = Call.caller,
@@ -63,7 +64,7 @@ contract FungibleToken =
   public stateful function approve(spender: address, value: int) =
     require(value >= 0, "The provided value cannot be sub zero.")
     put(state{ allowances[(Call.caller, spender)] = value })
-    Chain.event(Approval(Call.caller, spender, state.allowances[(Call.caller, spender)]))
+    Chain.event(Allowance(Call.caller, spender, state.allowances[(Call.caller, spender)]))
 
   public function total_supply() : int =
     state.total_supply
@@ -94,11 +95,11 @@ contract FungibleToken =
 
   public stateful function increase_allowance(spender: address, added_value: int) =
     put(state{ allowances[(Call.caller, spender)] = state.allowances[(Call.caller, spender)] + added_value })
-    Chain.event(Approval(Call.caller, spender, state.allowances[(Call.caller, spender)]))
+    Chain.event(Allowance(Call.caller, spender, state.allowances[(Call.caller, spender)]))
 
   public stateful function decrease_allowance(spender: address, subtracted_value: int) =
     put(state{ allowances[(Call.caller, spender)] = state.allowances[(Call.caller, spender)] - subtracted_value })
-    Chain.event(Approval(Call.caller, spender, state.allowances[(Call.caller, spender)]))
+    Chain.event(Allowance(Call.caller, spender, state.allowances[(Call.caller, spender)]))
 
   public stateful function mint(account: address, value: int) =
     only_owner()
@@ -107,6 +108,7 @@ contract FungibleToken =
   public stateful function burn(value: int) =
     require(balance_of(Call.caller) >= value, "The value provided for burning is less than account's balance.")
     put(state{ total_supply = state.total_supply - value, balances[Call.caller] = balance_of(Call.caller) - value })
+    Chain.event(Burn(Call.caller, value))
 
   // INTERNAL FUNCTIONS
 
