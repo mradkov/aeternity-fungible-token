@@ -42,6 +42,7 @@ contract FungibleToken =
     Transfer(indexed address, indexed address, indexed int)
     | Allowance(indexed address, indexed address, indexed int)
     | Burn(indexed address, indexed int)
+    | Mint(indexed address, indexed int)
 
   public stateful function init(name: string, total_supply : int, decimals : int, symbol : string) =
     { owner        = Call.caller,
@@ -99,10 +100,12 @@ contract FungibleToken =
   public stateful function mint(account: address, value: int) =
     require_owner()
     put(state{ total_supply = state.total_supply + value, balances[account = 0] @ b = b + value })
+    Chain.event(Mint(account, value))
 
   public stateful function burn(value: int) =
     require_balance(Call.caller, value)
     put(state{ total_supply = state.total_supply - value, balances[Call.caller] @ b = b - value })
+    Chain.event(Burn(Call.caller, value))
 
   // INTERNAL FUNCTIONS
 
