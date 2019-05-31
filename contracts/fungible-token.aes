@@ -44,11 +44,10 @@ contract FungibleToken =
     | Burn(indexed address, indexed int)
     | Mint(indexed address, indexed int)
 
-  public stateful function init(name: string, total_supply : int, decimals : int, symbol : string) =
-    require_non_negative_value(total_supply)
+  public stateful function init(name: string, decimals : int, symbol : string) =
     require_non_negative_value(decimals)
     { owner        = Call.caller,
-      total_supply = total_supply,
+      total_supply = 0,
       balances     = {},
       allowances   = {},
       meta_info    = { name = name, symbol = symbol, decimals = decimals } }

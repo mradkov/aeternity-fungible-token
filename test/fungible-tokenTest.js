@@ -17,12 +17,10 @@
 const Ae = require('@aeternity/aepp-sdk').Universal;
 
 const config = {
-    host: "http://localhost:3001/",
-    internalHost: "http://localhost:3001/internal/",
-    gas: 200000,
-    ttl: 55,
+    host: 'http://localhost:3001/',
+    internalHost: 'http://localhost:3001/internal/',
     compilerUrl: 'https://compiler.aepps.com'
-}
+};
 
 describe('Fungible Token Contract', () => {
 
@@ -39,16 +37,24 @@ describe('Fungible Token Contract', () => {
             compilerUrl: config.compilerUrl
         });
 
-    })
+    });
 
-    it('Deploying Example Contract', async () => {
-        let contractSource = utils.readFileRelative('./contracts/fungible-token.aes', "utf-8"); // Read the aes file
-
+    it('Deploying Fungible Token Contract: Meta Information', async () => {
+        let contractSource = utils.readFileRelative('./contracts/fungible-token.aes', 'utf-8');
         contract = await owner.getContractInstance(contractSource);
 
-        const deployPromise = contract.deploy(["AE Test Token", 100, 0, "AETT"]);
+        const deploy = await contract.deploy(['AE Test Token', 0, 'AETT']);
+        assert.equal(deploy.deployInfo.result.returnType, 'ok');
+        const metaInfo = await contract.call('meta_info').then(call => call.decode());
+        assert.deepEqual(metaInfo, {name: 'AE Test Token', symbol: 'AETT', decimals: 0});
 
-        await assert.isFulfilled(deployPromise, 'Could not deploy the Fungible Token Smart Contract'); // Check it is deployed
-    })
+        const deployDecimals = await contract.deploy(['AE Test Token', 10, 'AETT']);
+        assert.equal(deployDecimals.deployInfo.result.returnType, 'ok');
+        const metaInfoDecimals = await contract.call('meta_info').then(call => call.decode());
+        assert.deepEqual(metaInfoDecimals, {name: 'AE Test Token', symbol: 'AETT', decimals: 10});
 
-})
+        const deployFail = await contract.deploy(['AE Test Token', -10, 'AETT']).then(() => true).catch(() => false);
+        assert.equal(deployFail, false);
+    });
+
+});
