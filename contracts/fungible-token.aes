@@ -45,6 +45,8 @@ contract FungibleToken =
     | Mint(indexed address, indexed int)
 
   public stateful function init(name: string, total_supply : int, decimals : int, symbol : string) =
+    require_non_negative_value(total_supply)
+    require_non_negative_value(decimals)
     { owner        = Call.caller,
       total_supply = total_supply,
       balances     = {},
@@ -99,11 +101,13 @@ contract FungibleToken =
 
   public stateful function mint(account: address, value: int) =
     require_owner()
+    require_non_negative_value(value)
     put(state{ total_supply = state.total_supply + value, balances[account = 0] @ b = b + value })
     Chain.event(Mint(account, value))
 
   public stateful function burn(value: int) =
     require_balance(Call.caller, value)
+    require_non_negative_value(value)
     put(state{ total_supply = state.total_supply - value, balances[Call.caller] @ b = b - value })
     Chain.event(Burn(Call.caller, value))
 
