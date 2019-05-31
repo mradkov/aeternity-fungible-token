@@ -11,6 +11,7 @@
   "dependencies": {
     "@aeternity/aepp-sdk": "3.3.0",
     "forgae": "1.4.1",
+    "keccak256": "^1.0.0",
     "yarn": "1.16.0"
   }
 }
