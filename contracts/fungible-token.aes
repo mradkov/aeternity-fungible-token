@@ -43,6 +43,8 @@ contract FungibleToken =
     | Burn(indexed address, indexed int)
 
   public stateful function init(name: string, total_supply : int, decimals : int, symbol : string) =
+    require(String.length(name) >= 1, "STRING_TOO_SHORT_NAME")
+    require(String.length(symbol) >= 1, "STRING_TOO_SHORT_SYMBOL")
     { owner        = Call.caller,
       total_supply = total_supply,
       balances     = {},
