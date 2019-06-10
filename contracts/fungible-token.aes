@@ -45,7 +45,8 @@ contract FungibleToken =
     | Mint(indexed address, indexed int)
 
   public stateful function init(name: string, decimals : int, symbol : string) =
-    require_non_negative_value(decimals)
+    require(String.length(name) >= 1, "STRING_TOO_SHORT_NAME")
+    require(String.length(symbol) >= 1, "STRING_TOO_SHORT_SYMBOL")
     { owner        = Call.caller,
       total_supply = 0,
       balances     = {},
