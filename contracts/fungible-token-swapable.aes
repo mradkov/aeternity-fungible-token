@@ -119,6 +119,26 @@ contract FungibleTokenSwapable =
     put(state{ total_supply = state.total_supply - value, balances[Call.caller] @ b = b - value })
     Chain.event(Burn(Call.caller, value))
 
+  public stateful function migrate_and_burn(new_token_adderss: address) : balances =
+    // only owner can execute migration
+    require_owner()
+
+    // lock contract calls during the migration process
+    put(state{ locked = true })
+
+    // update the new token address
+    put(state{ meta_info.new_token_adderss = new_token_adderss })
+
+    // TODO: implement proper burn of old tokens 
+
+    let contract_balances = state.balance
+
+    // return the balances map so the new contract can update balances
+    contract_balances
+
+
+
+
   // INTERNAL FUNCTIONS
 
   private function require_owner() =
