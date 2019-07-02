@@ -131,11 +131,10 @@ contract FungibleTokenSwapable =
 
     // TODO: implement proper burn of old tokens 
 
-    let contract_balances = state.balance
-
+    let contract_balances = state.balances
+    
     // return the balances map so the new contract can update balances
     contract_balances
-
 
 
 
