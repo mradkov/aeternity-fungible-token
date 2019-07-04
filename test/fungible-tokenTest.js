@@ -17,12 +17,12 @@
 const Ae = require('@aeternity/aepp-sdk').Universal;
 const Crypto = require('@aeternity/aepp-sdk').Crypto;
 const Bytes = require('@aeternity/aepp-sdk/es/utils/bytes');
-const keccak256 = require('keccak256');
+var blake2b = require('blake2b');
 
 const config = {
     host: 'http://localhost:3001/',
     internalHost: 'http://localhost:3001/internal/',
-    compilerUrl: 'http://localhost:3080'
+    compilerUrl: 'http://localhost:3081'
 };
 
 describe('Fungible Token Contract', () => {
@@ -51,12 +51,14 @@ describe('Fungible Token Contract', () => {
         });
     });
 
+    const hashTopic = topic => blake2b(32).update(Buffer.from(topic)).digest('hex');
+    const topicHashFromResult = result => Bytes.toBytes(result.result.log[0].topics[0], true).toString('hex');
+
     beforeEach(async () => {
         let contractSource = utils.readFileRelative('./contracts/fungible-token.aes', 'utf-8');
         contract = await owner.getContractInstance(contractSource);
         const deploy = await contract.deploy(['AE Test Token', 0, 'AETT']);
-        assert.equal(deploy.deployInfo.result.returnType, 'ok');
-
+        assert.equal(deploy.result.returnType, 'ok');
     });
 
     it('Deploying Fungible Token Contract: Meta Information', async () => {
@@ -64,37 +66,37 @@ describe('Fungible Token Contract', () => {
         let deployTestContract = await owner.getContractInstance(contractSource);
 
         const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
-        assert.equal(deploy.deployInfo.result.returnType, 'ok');
-        const metaInfo = await deployTestContract.call('meta_info', [], {callStatic: true}).then(call => call.decode());
-        assert.deepEqual(metaInfo, {name: 'AE Test Token', symbol: 'AETT', decimals: 0});
+        assert.equal(deploy.result.returnType, 'ok');
+        const metaInfo = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfo.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 0});
 
         const deployDecimals = await deployTestContract.deploy(['AE Test Token', 10, 'AETT']);
-        assert.equal(deployDecimals.deployInfo.result.returnType, 'ok');
-        const metaInfoDecimals = await deployTestContract.call('meta_info', [], {callStatic: true}).then(call => call.decode());
-        assert.deepEqual(metaInfoDecimals, {name: 'AE Test Token', symbol: 'AETT', decimals: 10});
+        assert.equal(deployDecimals.result.returnType, 'ok');
+        const metaInfoDecimals = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfoDecimals.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 10});
 
-        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT']).catch(() => false);
-        assert.equal(deployFail, false); // optimize to test actual error, when compiler is fixed
+        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT']).catch(e => e);
+        assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
     });
 
     it('Fungible Token Contract: Mint Tokens', async () => {
-        const mint = await contract.call('mint', [ownerKeypair.publicKey, 10]);
-        assert.equal(Bytes.toBytes(mint.result.log[0].topics[0], true).toString('hex'), keccak256('Mint').toString('hex'));
+        const mint = await contract.methods.mint(ownerKeypair.publicKey, 10);
+        assert.equal(topicHashFromResult(mint), hashTopic('Mint'));
         assert.equal(Crypto.addressFromDecimal(mint.result.log[0].topics[1]), ownerKeypair.publicKey);
         assert.equal(mint.result.log[0].topics[2], 10);
         assert.equal(mint.result.returnType, 'ok');
-        const totalSupply = await contract.call('total_supply', [], {callStatic: true}).then(call => call.decode());
-        assert.deepEqual(totalSupply, 10);
-        const balance = await contract.call('balance', [ownerKeypair.publicKey], {callStatic: true}).then(call => call.decode());
-        assert.deepEqual(balance, 10);
+        const totalSupply = await contract.methods.total_supply();
+        assert.deepEqual(totalSupply.decodedResult, 10);
+        const balance = await contract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balance.decodedResult, 10);
 
-        const mintFailAmount = await contract.call('mint', [ownerKeypair.publicKey, -10]).catch(() => false);
-        assert.equal(mintFailAmount, false); // optimize to test actual error, when compiler is fixed
+        const mintFailAmount = await contract.methods.mint(ownerKeypair.publicKey, -10).catch(e => e);
+        assert.include(mintFailAmount.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
 
         let contractSource = utils.readFileRelative('./contracts/fungible-token.aes', 'utf-8');
         let otherClientContract = await otherClient.getContractInstance(contractSource, {contractAddress: contract.deployInfo.address});
-        const mintFailOwner = await otherClientContract.call('mint', [ownerKeypair.publicKey, 10]).catch(e => e);
-        assert.equal(mintFailOwner.decodedError.includes('ONLY_OWNER_CALL_ALLOWED'), true);
+        const mintFailOwner = await otherClientContract.methods.mint(ownerKeypair.publicKey, 10).catch(e => e);
+        assert.include(mintFailOwner.decodedError, 'ONLY_OWNER_CALL_ALLOWED');
     });
 
 });
