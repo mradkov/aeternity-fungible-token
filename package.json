@@ -9,9 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aeternity/aepp-sdk": "3.3.0",
-    "forgae": "1.4.1",
-    "keccak256": "^1.0.0",
+    "@aeternity/aepp-sdk": "4.1.0",
+    "blake2b": "^2.1.3",
+    "forgae": "2.0.1",
+    "forgae-lib": "1.0.4",
     "yarn": "1.16.0"
   }
 }
