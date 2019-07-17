@@ -99,4 +99,16 @@ describe('Fungible Token Contract', () => {
         assert.include(mintFailOwner.decodedError, 'ONLY_OWNER_CALL_ALLOWED');
     });
 
+    it('Fungible Token Contract: Create Allowance', async () => {
+        const create_allowance = await contract.methods.create_allowance(otherKeypair.publicKey, 10);
+        assert.equal(topicHashFromResult(create_allowance), hashTopic('Allowance'));
+        assert.equal(Crypto.addressFromDecimal(create_allowance.result.log[0].topics[1]), ownerKeypair.publicKey);
+        assert.equal(Crypto.addressFromDecimal(create_allowance.result.log[0].topics[2]), otherKeypair.publicKey);
+        assert.equal(create_allowance.result.log[0].topics[3], 10);
+        assert.equal(create_allowance.result.returnType, 'ok');
+
+        const allowanceFailAmount = await contract.methods.create_allowance(otherKeypair.publicKey, -10).catch(e => e);
+        assert.include(allowanceFailAmount.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
+    });
+
 });
