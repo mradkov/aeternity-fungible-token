@@ -145,6 +145,7 @@ contract FungibleTokenSwapable =
 
   private function require_allowance_not_existent(allowance_accounts : allowance_accounts) =
     switch(allowance(allowance_accounts))
+      None => None
       Some(_) => abort("ALLOWANCE_ALREADY_EXISTENT")
 
   private function require_non_negative_value(value : int) =
