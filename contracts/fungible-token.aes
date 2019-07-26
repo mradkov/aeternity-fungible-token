@@ -183,7 +183,6 @@ contract FungibleToken =
     switch(allowance(allowance_accounts))
       Some(allowance) =>
         require_non_negative_value(allowance - value)
-        require(allowance + value >= allowance, "OPERATION_NOT_POSSIBLE")
         allowance
       None => abort("ALLOWANCE_NOT_EXISTENT")
 
