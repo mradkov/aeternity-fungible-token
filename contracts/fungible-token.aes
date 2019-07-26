@@ -168,38 +168,39 @@ contract FungibleToken =
 
   // INTERNAL FUNCTIONS
 
-  private function require_owner() =
+  function require_owner() =
     require(Call.caller == state.owner, "ONLY_OWNER_CALL_ALLOWED")
 
-  private function require_allowance_not_existent(allowance_accounts : allowance_accounts) =
+  function require_allowance_not_existent(allowance_accounts : allowance_accounts) =
     switch(allowance(allowance_accounts))
       None => None
       Some(_) => abort("ALLOWANCE_ALREADY_EXISTENT")
 
-  private function require_non_negative_value(value : int) =
+  function require_non_negative_value(value : int) =
     require(value >= 0, "NON_NEGATIVE_VALUE_REQUIRED")
 
-  private function require_allowance(allowance_accounts : allowance_accounts, value : int) : int =
+  function require_allowance(allowance_accounts : allowance_accounts, value : int) : int =
     switch(allowance(allowance_accounts))
       Some(allowance) =>
-        require(allowance >= value, "ACCOUNT_INSUFFICIENT_ALLOWANCE")
+        require_non_negative_value(allowance - value)
+        require(allowance + value >= allowance, "OPERATION_NOT_POSSIBLE")
         allowance
       None => abort("ALLOWANCE_NOT_EXISTENT")
 
-  private function require_balance(account : address, value : int) =
+  function require_balance(account : address, value : int) =
     switch(balance(account))
       Some(balance) =>
         require(balance >= value, "ACCOUNT_INSUFFICIENT_BALANCE")
       None => abort("BALANCE_ACCOUNT_NOT_EXISTENT")
 
-  private stateful function internal_transfer(from_account: address, to_account: address, value: int) =
+  stateful function internal_transfer(from_account: address, to_account: address, value: int) =
     require_non_negative_value(value)
     require_balance(from_account, value)
     put(state{ balances[from_account] @ b = b - value })
     put(state{ balances[to_account = 0] @ b = b + value })
     Chain.event(Transfer(from_account, to_account, value))
 
-  private stateful function internal_change_allowance(allowance_accounts : allowance_accounts, value_change : int) =
+  stateful function internal_change_allowance(allowance_accounts : allowance_accounts, value_change : int) =
     let allowance = require_allowance(allowance_accounts, value_change)
     let new_allowance = allowance + value_change
     require_non_negative_value(new_allowance)

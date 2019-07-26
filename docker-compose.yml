@@ -2,7 +2,7 @@
 version: '3'
 services:
   node1:
-    image: aeternity/aeternity:v3.3.0
+    image: aeternity/aeternity:v3.2.0
     hostname: node1
     environment:
       EPOCH_CONFIG: /home/epoch/epoch.yaml
@@ -14,7 +14,7 @@ services:
       - node1_db:/home/epoch/node/data/mnesia
 
   node2:
-    image: aeternity/aeternity:v3.3.0
+    image: aeternity/aeternity:v3.2.0
     hostname: node2
     environment:
       EPOCH_CONFIG: /home/epoch/epoch.yaml
@@ -26,7 +26,7 @@ services:
       - node2_db:/home/epoch/node/data/mnesia
 
   node3:
-    image: aeternity/aeternity:v3.3.0
+    image: aeternity/aeternity:v3.2.0
     hostname: node3
     environment:
       EPOCH_CONFIG: /home/epoch/epoch.yaml
@@ -50,11 +50,7 @@ services:
       - ./docker/nginx-cors.conf:/etc/nginx/cors.conf
       - ./docker/nginx-ws.conf:/etc/nginx/ws.conf
 
-  compiler:
-    image: aeternity/aesophia_http:v3.2.0
-    restart: always
-    ports:
-      - "3081:3080"
+  
 
 volumes:
   node1_db:
@@ -63,4 +59,4 @@ volumes:
   node2_keys:
   node3_db:
   node3_keys:
-
+    
