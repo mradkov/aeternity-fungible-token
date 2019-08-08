@@ -22,7 +22,7 @@ var blake2b = require('blake2b');
 const config = {
     host: 'http://localhost:3001/',
     internalHost: 'http://localhost:3001/internal/',
-    compilerUrl: 'http://localhost:3081'
+    compilerUrl: 'http://localhost:3080'
 };
 
 describe('Fungible Token Contract', () => {
@@ -137,11 +137,33 @@ describe('Fungible Token Contract', () => {
         const allowanceFailAmount = await contract.methods.create_allowance(otherKeypair.publicKey, -10).catch(e => e);
         assert.include(allowanceFailAmount.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
 
-        const get_allowance = await contract.methods.allowance({from_account: ownerKeypair.publicKey, for_account: otherKeypair.publicKey}).catch(e => e);
-        assert.equal(get_allowance.decodedResult, 10);
+        const get_allowance_before = await contract.methods.allowance({from_account: ownerKeypair.publicKey, for_account: otherKeypair.publicKey}).catch(e => e);
+        assert.equal(get_allowance_before.decodedResult, 10);
 
         const change_allowance = await contract.methods.change_allowance(otherKeypair.publicKey, 10).catch(e => e);
-        assert.equal(change_allowance.decodedError, 20);
+
+        const get_allowance_after = await contract.methods.allowance({from_account: ownerKeypair.publicKey, for_account: otherKeypair.publicKey}).catch(e => e);
+        assert.equal(get_allowance_after.decodedResult, 20);
+    });
+
+    it('Fungible Token Contract: Decrease Allowance', async () => {
+        const create_allowance = await contract.methods.create_allowance(otherKeypair.publicKey, 10);
+        assert.equal(topicHashFromResult(create_allowance), hashTopic('Allowance'));
+        assert.equal(Crypto.addressFromDecimal(create_allowance.result.log[0].topics[1]), ownerKeypair.publicKey);
+        assert.equal(Crypto.addressFromDecimal(create_allowance.result.log[0].topics[2]), otherKeypair.publicKey);
+        assert.equal(create_allowance.result.log[0].topics[3], 10);
+        assert.equal(create_allowance.result.returnType, 'ok');
+
+        const allowanceFailAmount = await contract.methods.create_allowance(otherKeypair.publicKey, -10).catch(e => e);
+        assert.include(allowanceFailAmount.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
+
+        const get_allowance_before = await contract.methods.allowance({from_account: ownerKeypair.publicKey, for_account: otherKeypair.publicKey}).catch(e => e);
+        assert.equal(get_allowance_before.decodedResult, 10);
+
+        const change_allowance = await contract.methods.change_allowance(otherKeypair.publicKey, -5).catch(e => e);
+        
+        const get_allowance_after = await contract.methods.allowance({from_account: ownerKeypair.publicKey, for_account: otherKeypair.publicKey}).catch(e => e);
+        assert.equal(get_allowance_after.decodedResult, 5);
     });
 
 });
