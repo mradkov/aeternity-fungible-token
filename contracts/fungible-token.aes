@@ -200,8 +200,14 @@ contract FungibleToken =
     Chain.event(Transfer(from_account, to_account, value))
 
   stateful function internal_change_allowance(allowance_accounts : allowance_accounts, value_change : int) =
-    let allowance = require_allowance(allowance_accounts, value_change)
-    let new_allowance = allowance + value_change
-    require_non_negative_value(new_allowance)
+    let new_allowance = switch(is_zero_value(value_change))
+      true => 0
+      false =>
+        let allowance = require_allowance(allowance_accounts, value_change)
+        let new_allowance' = allowance + value_change
+        require_non_negative_value(new_allowance')
+        new_allowance'
     put(state{ allowances[allowance_accounts] = new_allowance })
     Chain.event(Allowance(allowance_accounts.from_account, allowance_accounts.for_account, new_allowance))
+
+  function is_zero_value(value: int) : bool = value == 0
