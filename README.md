@@ -46,26 +46,26 @@ NOTES:
 `meta_info` - Returns the meta_information record from the token in the required format `{ name : string, symbol : string, decimals : int }`.
 
 ```
-public function meta_info() : meta_info
+entrypoint meta_info() : meta_info
 ```
 
 `total_supply` - Returns the total token supply.
 
 ```
-public function total_supply() : int
+entrypoint total_supply() : int
 ```
 
 `balances` - Returns the full balance state for static calls, e.g. by a blockchain explorer.
 
 ```
-public function balances() : map(address, int)
+entrypoint balances() : map(address, int)
 ```
 
 
 `balance` - Returns the account balance of another account with address `owner`, if the account exists. If the owner address is unknown to the contract `None` will be returned, to be able to determine if the account has balance of 0 or is still unknown.
 
 ```
-public function balance(owner: address) : option(int)
+entrypoint balance(owner: address) : option(int)
 ```
 
 `transfer` - Transfers `value` amount of tokens to `to_account` address, and MUST fire the `Transfer` event. The function SHOULD abort if the message caller’s account balance does not have enough tokens to spend.
@@ -73,7 +73,7 @@ public function balance(owner: address) : option(int)
 Note Transfers of 0 values MUST be treated as normal transfers and fire the Transfer event.
 
 ```
-public stateful function transfer(to_account: address, value: int)
+stateful entrypoint transfer(to_account: address, value: int)
 ```
 
 
@@ -93,7 +93,7 @@ Transfer(indexed address, indexed address, indexed int)
 `mint` - Mints `value` new tokens to `account`. The function SHOULD abort if `Call.caller` is not `state.owner`.
 
 ```
-public stateful function mint(account: address, value: int)
+stateful entrypoint mint(account: address, value: int)
 ```
 
 ### Events
@@ -114,7 +114,7 @@ Allows `for_account` to withdraw from your account multiple times, up to the `va
 NOTE: To prevent attack vectors (like the ones possible in ERC20) clients SHOULD make sure to create user interfaces in such a way that they set the allowance first to 0 before setting it to another value for the same spender. THOUGH The contract itself shouldn’t enforce it, to allow backwards compatibility with contracts deployed before
 
 ```
-public stateful function create_allowance(for_account: address, value: int)
+stateful entrypoint create_allowance(for_account: address, value: int)
 ```
 
 `transfer_allowance`
@@ -125,14 +125,14 @@ The `transfer_allowance` method is used for a withdraw workflow, allowing contra
 Note Transfers of 0 values MUST be treated as normal transfers and fire the Transfer event.
 
 ```
-public stateful function transfer_allowance(from_account: address, to_account: address, value: int)
+stateful entrypoint transfer_allowance(from_account: address, to_account: address, value: int)
 ```
 
 `allowance`
 Returns the amount which `for_account` is still allowed to withdraw from `from_account`, where `record allowance_accounts = { from_account : address, for_account : address }`. If no allowance for this combination of accounts exists, `None` is returned.
 
 ```
-public function allowance(allowance_accounts : allowance_accounts) : option(int)
+entrypoint allowance(allowance_accounts : allowance_accounts) : option(int)
 ```
 
 ### Events
