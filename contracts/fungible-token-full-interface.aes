@@ -1,0 +1,36 @@
+@compiler >= 4
+
+contract FungibleTokenFullInterface =
+  record meta_info =
+    { name : string
+    , symbol : string
+    , decimals : int }
+
+  record allowance_accounts = { from_account : address, for_account : address }
+  type allowances = map(allowance_accounts, int)
+
+  datatype event =
+    Transfer(indexed address, indexed address, indexed int)
+    | Allowance(indexed address, indexed address, indexed int)
+    | Burn(indexed address, indexed int)
+    | Mint(indexed address, indexed int)
+
+  entrypoint aex9_extensions      : ()                      => list(string)
+  entrypoint meta_info            : ()                      => meta_info
+  entrypoint total_supply         : ()                      => int
+  entrypoint owner                : ()                      => address
+  entrypoint balances             : ()                      => map(address, int)
+  entrypoint balance              : (address)               => option(int)
+  entrypoint transfer             : (address, int)          => ()
+  entrypoint allowances           : ()                      => allowances
+  entrypoint allowance            : (allowance_accounts)    => option(int)
+  entrypoint allowance_for_caller : (address)               => option(int)
+  entrypoint transfer_allowance   : (address, address, int) => ()
+  entrypoint create_allowance     : (address, int)          => ()
+  entrypoint change_allowance     : (address, int)          => ()
+  entrypoint burn                 : (int)                   => ()
+  entrypoint mint                 : (address, int)          => ()
+
+
+
+
