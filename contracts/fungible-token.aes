@@ -44,6 +44,9 @@ contract FungibleToken =
   datatype event =
     Transfer(indexed address, indexed address, indexed int)
 
+  // List of supported extensions
+  entrypoint aex9_extensions() : list(string) = []
+
   // Create a fungible token with
   // the following `name` `symbol` and `decimals`
   // and set the inital smart contract state

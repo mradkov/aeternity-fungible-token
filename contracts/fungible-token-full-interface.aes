@@ -15,6 +15,7 @@ contract FungibleTokenFullInterface =
    |Burn(indexed address, indexed int)
    |Mint(indexed address, indexed int)
 
+  entrypoint aex2_extensions      : ()                      => list(string)
   entrypoint meta_info            : ()                      => meta_info
   entrypoint total_supply         : ()                      => int
   entrypoint owner                : ()                      => address
