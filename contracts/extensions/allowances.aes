@@ -18,87 +18,28 @@
 // THIS IS NOT SECURITY AUDITED
 // DO NEVER USE THIS WITHOUT SECURITY AUDIT FIRST
 
-/// @title - Fungible token with allowances
-contract FungibleToken =
-  
-  // This defines the state of type record encapsulating the conract's mutable state 
+
+  // This defines the state of type record encapsulating the conract's mutable state
   record state =
-    { owner        : address      // the smart contract's owner address
-    , total_supply : int          // total token supply
-    , balances     : balances     // balances for each account
-    , allowances   : allowances   // owner of account approves the transfer of an amount to another account
-    , meta_info    : meta_info }  // token meta info (name, symbol, decimals)
+    { allowances : allowances }  // owner of account approves the transfer of an amount to another account
 
   // This is the format of allowance record type that will be used in the state
   record allowance_accounts = { from_account : address, for_account : address }
 
-  // This is the meta information record type
-  record meta_info =
-    { name     : string
-    , symbol   : string
-    , decimals : int }
-
   // This is a type alias for the allowances map
   type allowances = map(allowance_accounts, int)
-
-  // This is a type alias for the balances map
-  type balances = map(address, int)
-
   // Declaration and structure of datatype event
   // and events that will be emitted on changes
   datatype event =
-    Transfer(indexed address, indexed address, indexed int)
-    | Allowance(indexed address, indexed address, indexed int)
-    | Burn(indexed address, indexed int)
-    | Mint(indexed address, indexed int)
+    Allowance(indexed address, indexed address, indexed int)
 
-  // Create a fungible token with
-  // the following 
-  // @param `name`
-  // @param `symbol`
-  // @param `decimals`
-  // @param `total_supply`
   // and set the inital smart contract state
-  entrypoint init(name: string, decimals : int, symbol : string, total_supply : int) =
-    // If the `name` lenght is less than 1 symbol abort the execution
-    require(String.length(name) >= 1, "STRING_TOO_SHORT_NAME")
-    // If the `symbol` length is less than 1 symbol abort the execution
-    require(String.length(symbol) >= 1, "STRING_TOO_SHORT_SYMBOL")
-    // If the provided value for `decimals` is negative abort the execution
-    require_non_negative_value(decimals)
-    { owner        = Call.caller,
-      total_supply = total_supply,
-      balances     = { [Call.caller] = total_supply },
-      allowances   = {},
-      meta_info    = { name = name, symbol = symbol, decimals = decimals } }
-
-  // Get the token meta info
-  entrypoint meta_info() : meta_info =
-    state.meta_info
-
-  // Get the token total supply
-  entrypoint total_supply() : int =
-    state.total_supply
-
-  // Get the token owner address
-  entrypoint owner() : address =
-    state.owner
-
-  // Get the balances state
-  entrypoint balances() : balances =
-    state.balances
+  entrypoint init() =
+    { allowances = {} }
 
   // Get the allowances state
   entrypoint allowances() : allowances =
     state.allowances
-
-  // Get balance for address of `owner`
-  // returns option(int)
-  // If the `owner` address haven't had any token balance
-  // in this smart contract the return value is None
-  // Otherwise Some(int) is returned with the current balance
-  entrypoint balance(owner: address) : option(int) =
-    Map.lookup(owner, state.balances)
 
   // Get the allowance for passed `allowance_accounts` record
   // returns option(int)
@@ -117,10 +58,6 @@ contract FungibleToken =
   // Otherwise Some(int) is returned with the allowance amount
   entrypoint allowance_for_caller(from_account: address) : option(int) =
     allowance({ from_account = from_account, for_account = Call.caller })
-
-  /// Transfer the balance of `value` from `Call.caller` to `to_account` account 
-  stateful entrypoint transfer(to_account: address, value: int) =
-    internal_transfer(Call.caller, to_account, value)
 
   // Send `value` amount of tokens from address `from_account` to address `to_account`
   // The transfer_allowance method is used for a withdraw workflow, allowing contracts to send
@@ -155,16 +92,11 @@ contract FungibleToken =
     internal_change_allowance(allowance_accounts, value_change)
 
   // INTERNAL FUNCTIONS
-  function require_owner() =
-    require(Call.caller == state.owner, "ONLY_OWNER_CALL_ALLOWED")
 
   function require_allowance_not_existent(allowance_accounts : allowance_accounts) =
     switch(allowance(allowance_accounts))
       None => None
       Some(_) => abort("ALLOWANCE_ALREADY_EXISTENT")
-
-  function require_non_negative_value(value : int) =
-    require(value >= 0, "NON_NEGATIVE_VALUE_REQUIRED")
 
   function require_allowance(allowance_accounts : allowance_accounts, value : int) : int =
     switch(allowance(allowance_accounts))
@@ -173,21 +105,8 @@ contract FungibleToken =
         allowance
       None => abort("ALLOWANCE_NOT_EXISTENT")
 
-  function require_balance(account : address, value : int) =
-    switch(balance(account))
-      Some(balance) =>
-        require(balance >= value, "ACCOUNT_INSUFFICIENT_BALANCE")
-      None => abort("BALANCE_ACCOUNT_NOT_EXISTENT")
-
-  stateful function internal_transfer(from_account: address, to_account: address, value: int) =
-    require_non_negative_value(value)
-    require_balance(from_account, value)
-    put(state{ balances[from_account] @ b = b - value })
-    put(state{ balances[to_account = 0] @ b = b + value })
-    Chain.event(Transfer(from_account, to_account, value))
-
   stateful function internal_change_allowance(allowance_accounts : allowance_accounts, value_change : int) =
-    let new_allowance = switch(is_zero_value(value_change))
+    let new_allowance = switch(value_change == 0)
       true => 0
       false =>
         let allowance = require_allowance(allowance_accounts, value_change)
@@ -196,5 +115,3 @@ contract FungibleToken =
         new_allowance'
     put(state{ allowances[allowance_accounts] = new_allowance })
     Chain.event(Allowance(allowance_accounts.from_account, allowance_accounts.for_account, new_allowance))
-
-  function is_zero_value(value: int) : bool = value == 0

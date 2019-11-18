@@ -79,7 +79,7 @@ describe('Fungible Token Contract', () => {
         assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
     });
 
-    it('Fungible Token Contract: Mint Tokens', async () => {
+    it.skip('Fungible Token Contract: Mint Tokens', async () => {
         const mint = await contract.methods.mint(ownerKeypair.publicKey, 10);
         assert.equal(topicHashFromResult(mint), hashTopic('Mint'));
         assert.equal(Crypto.addressFromDecimal(mint.result.log[0].topics[1]), ownerKeypair.publicKey);
@@ -99,7 +99,7 @@ describe('Fungible Token Contract', () => {
         assert.include(mintFailOwner.decodedError, 'ONLY_OWNER_CALL_ALLOWED');
     });
 
-    it('Fungible Token Contract: Create Allowance', async () => {
+    it.skip('Fungible Token Contract: Create Allowance', async () => {
         const create_allowance = await contract.methods.create_allowance(otherKeypair.publicKey, 10);
         assert.equal(topicHashFromResult(create_allowance), hashTopic('Allowance'));
         assert.equal(Crypto.addressFromDecimal(create_allowance.result.log[0].topics[1]), ownerKeypair.publicKey);
@@ -111,7 +111,7 @@ describe('Fungible Token Contract', () => {
         assert.include(allowanceFailAmount.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
     });
 
-    it('Fungible Token Contract: Get Allowance', async () => {
+    it.skip('Fungible Token Contract: Get Allowance', async () => {
         const create_allowance = await contract.methods.create_allowance(otherKeypair.publicKey, 10);
         assert.equal(topicHashFromResult(create_allowance), hashTopic('Allowance'));
         assert.equal(Crypto.addressFromDecimal(create_allowance.result.log[0].topics[1]), ownerKeypair.publicKey);
@@ -126,7 +126,7 @@ describe('Fungible Token Contract', () => {
         assert.equal(get_allowance.decodedResult, 10);
     });
 
-    it('Fungible Token Contract: Increase Allowance', async () => {
+    it.skip('Fungible Token Contract: Increase Allowance', async () => {
         const create_allowance = await contract.methods.create_allowance(otherKeypair.publicKey, 10);
         assert.equal(topicHashFromResult(create_allowance), hashTopic('Allowance'));
         assert.equal(Crypto.addressFromDecimal(create_allowance.result.log[0].topics[1]), ownerKeypair.publicKey);
@@ -146,7 +146,7 @@ describe('Fungible Token Contract', () => {
         assert.equal(get_allowance_after.decodedResult, 20);
     });
 
-    it('Fungible Token Contract: Decrease Allowance', async () => {
+    it.skip('Fungible Token Contract: Decrease Allowance', async () => {
         const create_allowance = await contract.methods.create_allowance(otherKeypair.publicKey, 10);
         assert.equal(topicHashFromResult(create_allowance), hashTopic('Allowance'));
         assert.equal(Crypto.addressFromDecimal(create_allowance.result.log[0].topics[1]), ownerKeypair.publicKey);
@@ -161,12 +161,12 @@ describe('Fungible Token Contract', () => {
         assert.equal(get_allowance_before.decodedResult, 10);
 
         const change_allowance = await contract.methods.change_allowance(otherKeypair.publicKey, -5).catch(e => e);
-        
+
         const get_allowance_after = await contract.methods.allowance({from_account: ownerKeypair.publicKey, for_account: otherKeypair.publicKey}).catch(e => e);
         assert.equal(get_allowance_after.decodedResult, 5);
     });
 
-    it('Fungible Token Contract: Decrease Allowance below zero (should fail)', async () => {
+    it.skip('Fungible Token Contract: Decrease Allowance below zero (should fail)', async () => {
         const create_allowance = await contract.methods.create_allowance(otherKeypair.publicKey, 10);
         assert.equal(topicHashFromResult(create_allowance), hashTopic('Allowance'));
         assert.equal(Crypto.addressFromDecimal(create_allowance.result.log[0].topics[1]), ownerKeypair.publicKey);
@@ -182,7 +182,7 @@ describe('Fungible Token Contract', () => {
 
         const change_allowance = await contract.methods.change_allowance(otherKeypair.publicKey, -11).catch(e => e);
         assert.include(change_allowance.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
-        
+
         const get_allowance_after = await contract.methods.allowance({from_account: ownerKeypair.publicKey, for_account: otherKeypair.publicKey}).catch(e => e);
         assert.equal(get_allowance_after.decodedResult, 10);
     });
