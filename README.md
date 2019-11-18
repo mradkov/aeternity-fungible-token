@@ -170,7 +170,10 @@ Transfer(indexed address, indexed address, indexed int)
 
 # Extensions
 
-This section covers the extensability of the basic token - e.g. mintable, allowances.
+This section covers the extendability of the basic token - e.g. mintable, burnable and allowances.
+
+When a token contract implements an extension its name should be included in the `aex9_extensions` array, in order for third party software or contracts to know the interface.
+Any extensions should be implementable without permission. Developers of extensions MUST choose a name for `aex9_extensions` that is not yet used. Developers CAN make a pull request to the reference implementation for general purpose extensions and maintainers choose to eventually include them.
 
 ## Extension Mintable ("mintable")
 
