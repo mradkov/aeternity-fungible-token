@@ -303,10 +303,6 @@ Allowance(indexed address, indexed address, indexed int)
 | for_account| address |
 | value| int |
 
-## Extension Allowance with Callback
-
-*TODO*
-
 ## Extension Swappable ("swappable")
 
 *TODO*
