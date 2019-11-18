@@ -1,0 +1,17 @@
+@compiler >= 4
+
+contract FungibleTokenInterface =
+  record meta_info =
+    { name : string
+    , symbol : string
+    , decimals : int }
+    
+  datatype event =
+    Transfer(indexed address, indexed address, indexed int)
+
+  entrypoint meta_info    : ()             => meta_info
+  entrypoint total_supply : ()             => int
+  entrypoint owner        : ()             => address
+  entrypoint balances     : ()             => map(address, int)
+  entrypoint balance      : (address)      => option(int)
+  entrypoint transfer     : (address, int) => ()
