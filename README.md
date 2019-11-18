@@ -305,7 +305,45 @@ Allowance(indexed address, indexed address, indexed int)
 
 ## Extension Swappable ("swappable")
 
-*TODO*
+### swap\(\)
+
+This function burns the whole balance of the `Call.caller` and stores the same amount in the `swapped` map. 
+
+```text
+stateful entrypoint swap() : ()
+```
+
+| parameter | type |
+| :--- | :--- |
+| value | int |
+
+### check_swap\(\)
+
+This function returns the amount of tokens that were burned trough `swap` for the provided account. 
+
+```text
+stateful entrypoint check_swap(account: address) : int
+```
+
+| parameter | type |
+| :--- | :--- |
+| account | address |
+
+## Events
+
+**Swap** - MUST trigger when tokens are swapped using the `swap` function.
+
+The swap event arguments should be as follows: `(account,  value)`
+
+```text
+Swap(indexed address, indexed int)
+```
+
+| parameter | type |
+| :--- | :--- |
+| account| address |
+| value | int |
+
 
 ## Implementation
 There are several implementations available at the moment, but they lack a thing or two (that is why this standard is being proposed).
