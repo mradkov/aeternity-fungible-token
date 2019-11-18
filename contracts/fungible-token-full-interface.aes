@@ -8,14 +8,14 @@ contract FungibleTokenFullInterface =
 
   record allowance_accounts = { from_account : address, for_account : address }
   type allowances = map(allowance_accounts, int)
-    
+
   datatype event =
     Transfer(indexed address, indexed address, indexed int)
-   |Allowance(indexed address, indexed address, indexed int)
-   |Burn(indexed address, indexed int)
-   |Mint(indexed address, indexed int)
+    | Allowance(indexed address, indexed address, indexed int)
+    | Burn(indexed address, indexed int)
+    | Mint(indexed address, indexed int)
 
-  entrypoint aex2_extensions      : ()                      => list(string)
+  entrypoint aex9_extensions      : ()                      => list(string)
   entrypoint meta_info            : ()                      => meta_info
   entrypoint total_supply         : ()                      => int
   entrypoint owner                : ()                      => address
@@ -33,4 +33,4 @@ contract FungibleTokenFullInterface =
 
 
 
-  
+

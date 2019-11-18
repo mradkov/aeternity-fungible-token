@@ -5,11 +5,11 @@ contract FungibleTokenInterface =
     { name : string
     , symbol : string
     , decimals : int }
-    
+
   datatype event =
     Transfer(indexed address, indexed address, indexed int)
 
-  entrypoint aex2_extensions : ()             => list(string)
+  entrypoint aex9_extensions : ()             => list(string)
   entrypoint meta_info       : ()             => meta_info
   entrypoint total_supply    : ()             => int
   entrypoint owner           : ()             => address
