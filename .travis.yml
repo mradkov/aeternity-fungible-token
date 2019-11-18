@@ -1,0 +1,11 @@
+dist: xenial
+sudo: false
+
+language: node_js
+node_js: '10'
+
+script:
+  - npm install -g aeproject
+  - npm install
+  - aeproject node
+  - aeproject test
