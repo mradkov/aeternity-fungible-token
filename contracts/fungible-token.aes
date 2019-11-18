@@ -18,7 +18,9 @@
 // THIS IS NOT SECURITY AUDITED
 // DO NEVER USE THIS WITHOUT SECURITY AUDIT FIRST
 
-/// @title - Fungible token with allowances
+@compiler >= 4
+
+/// @title - Fungible token basic
 contract FungibleToken =
   
   // This defines the state of type record encapsulating the conract's mutable state 
