@@ -22,8 +22,8 @@
 
 /// @title - Fungible token basic
 contract FungibleToken =
-  
-  // This defines the state of type record encapsulating the conract's mutable state 
+
+  // This defines the state of type record encapsulating the conract's mutable state
   record state =
     { owner        : address      // the smart contract's owner address
     , total_supply : int          // total token supply
@@ -44,7 +44,8 @@ contract FungibleToken =
   datatype event =
     Transfer(indexed address, indexed address, indexed int)
 
-  // List of supported extensions
+
+  // List of implemented extensions for the deployed contract
   entrypoint aex9_extensions() : list(string) = []
 
   // Create a fungible token with
@@ -86,7 +87,7 @@ contract FungibleToken =
   entrypoint balance(owner: address) : option(int) =
     Map.lookup(owner, state.balances)
 
-  /// Transfer the balance of `value` from `Call.caller` to `to_account` account 
+  /// Transfer the balance of `value` from `Call.caller` to `to_account` account
   stateful entrypoint transfer(to_account: address, value: int) =
     internal_transfer(Call.caller, to_account, value)
 

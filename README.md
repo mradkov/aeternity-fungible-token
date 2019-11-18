@@ -57,6 +57,7 @@ contract FungibleTokenInterface =
   datatype event =
     Transfer(indexed address, indexed address, indexed int)
 
+  entrypoint aex9_extensions : () => list(string)
   entrypoint meta_info : () => meta_info
   entrypoint total_supply : () => int
   entrypoint owner : () => address
@@ -66,6 +67,15 @@ contract FungibleTokenInterface =
 ```
 
 ## Methods
+
+
+### aex9_extensions\(\)
+
+This function **returns** a hardcoded list of all implemented extensions on the deployed contract.
+
+```text
+entrypoint aex9_extensions() : list(string)
+```
 
 ### meta_info\(\)
 
@@ -162,7 +172,7 @@ Transfer(indexed address, indexed address, indexed int)
 
 This section covers the extensability of the basic token - e.g. mintable, allowances.
 
-## Extension Mintable
+## Extension Mintable ("mintable")
 
 ### mint\(\)
 
@@ -192,7 +202,36 @@ Mint(indexed address, indexed int)
 | account| address |
 | value | int |
 
-## Extension Allowance
+## Extension Burnable ("burnable")
+
+### burn\(\)
+
+This function burns `value` of tokens from `Call.caller`. 
+
+```text
+stateful entrypoint burn(value: int) : ()
+```
+
+| parameter | type |
+| :--- | :--- |
+| value | int |
+
+## Events
+
+**Burn** - MUST trigger when tokens are burned using the `burn` function.
+
+The burn event arguments should be as follows: `(account,  value)`
+
+```text
+Burn(indexed address, indexed int)
+```
+
+| parameter | type |
+| :--- | :--- |
+| account| address |
+| value | int |
+
+## Extension Allowance ("allowances")
 
 ### create_allowance\(\)
 
@@ -265,7 +304,7 @@ Allowance(indexed address, indexed address, indexed int)
 
 *TODO*
 
-## Extension Swappable
+## Extension Swappable ("swappable")
 
 *TODO*
 
