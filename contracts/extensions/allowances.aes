@@ -77,7 +77,7 @@
     // Chcek if the passed value is not negative
     require_non_negative_value(value)
     // Set the allowance account pair in the memory variable
-    let allowance_accounts = { from_account =  Call.caller, for_account = for_account }
+    let allowance_accounts = { from_account = Call.caller, for_account = for_account }
     // Check if there is no allowance already present in the state
     // for these particular accounts pair.
     require_allowance_not_existent(allowance_accounts)
@@ -88,9 +88,14 @@
 
   // Allows to change the allowed spendable value for `for_account` with `value_change`
   stateful entrypoint change_allowance(for_account: address, value_change: int) =
-    let allowance_accounts = { from_account =  Call.caller, for_account = for_account }
+    let allowance_accounts = { from_account = Call.caller, for_account = for_account }
     internal_change_allowance(allowance_accounts, value_change)
 
+  // Resets the allowance given `for_account` to zero.
+  stateful entrypoint reset_allowance(for_account: address) =
+    let allowance_accounts = { from_account = Call.caller, for_account = for_account }
+    internal_change_allowance(allowance_accounts, - state.allowances[allowance_accounts])
+  
   // INTERNAL FUNCTIONS
 
   function require_allowance_not_existent(allowance_accounts : allowance_accounts) =
@@ -106,12 +111,8 @@
       None => abort("ALLOWANCE_NOT_EXISTENT")
 
   stateful function internal_change_allowance(allowance_accounts : allowance_accounts, value_change : int) =
-    let new_allowance = switch(value_change == 0)
-      true => 0
-      false =>
-        let allowance = require_allowance(allowance_accounts, value_change)
-        let new_allowance' = allowance + value_change
-        require_non_negative_value(new_allowance')
-        new_allowance'
+    let allowance = require_allowance(allowance_accounts, value_change)
+    let new_allowance = allowance + value_change
+    require_non_negative_value(new_allowance)
     put(state{ allowances[allowance_accounts] = new_allowance })
     Chain.event(Allowance(allowance_accounts.from_account, allowance_accounts.for_account, new_allowance))

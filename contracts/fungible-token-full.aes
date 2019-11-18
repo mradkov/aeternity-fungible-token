@@ -151,6 +151,11 @@ contract FungibleTokenFull =
     let allowance_accounts = { from_account =  Call.caller, for_account = for_account }
     internal_change_allowance(allowance_accounts, value_change)
 
+  // Resets the allowance given `for_account` to zero.
+  stateful entrypoint reset_allowance(for_account: address) =
+    let allowance_accounts = { from_account = Call.caller, for_account = for_account }
+    internal_change_allowance(allowance_accounts, - state.allowances[allowance_accounts])
+
   /// Transfer the balance of `value` from `Call.caller` to `to_account` account
   stateful entrypoint transfer(to_account: address, value: int) =
     internal_transfer(Call.caller, to_account, value)
@@ -205,12 +210,8 @@ contract FungibleTokenFull =
       None => abort("ALLOWANCE_NOT_EXISTENT")
 
   stateful function internal_change_allowance(allowance_accounts : allowance_accounts, value_change : int) =
-    let new_allowance = switch(value_change == 0)
-      true => 0
-      false =>
-        let allowance = require_allowance(allowance_accounts, value_change)
-        let new_allowance' = allowance + value_change
-        require_non_negative_value(new_allowance')
-        new_allowance'
+    let allowance = require_allowance(allowance_accounts, value_change)
+    let new_allowance = allowance + value_change
+    require_non_negative_value(new_allowance)
     put(state{ allowances[allowance_accounts] = new_allowance })
     Chain.event(Allowance(allowance_accounts.from_account, allowance_accounts.for_account, new_allowance))

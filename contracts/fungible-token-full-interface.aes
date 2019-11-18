@@ -28,6 +28,7 @@ contract FungibleTokenFullInterface =
   entrypoint transfer_allowance   : (address, address, int) => ()
   entrypoint create_allowance     : (address, int)          => ()
   entrypoint change_allowance     : (address, int)          => ()
+  entrypoint reset_allowance      : (address)               => ()
   entrypoint burn                 : (int)                   => ()
   entrypoint mint                 : (address, int)          => ()
 
