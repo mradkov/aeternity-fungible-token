@@ -14,6 +14,7 @@ contract FungibleTokenFullInterface =
     | Allowance(indexed address, indexed address, indexed int)
     | Burn(indexed address, indexed int)
     | Mint(indexed address, indexed int)
+    | Swap(indexed address, indexed int)
 
   entrypoint aex9_extensions      : ()                      => list(string)
   entrypoint meta_info            : ()                      => meta_info
@@ -31,6 +32,8 @@ contract FungibleTokenFullInterface =
   entrypoint reset_allowance      : (address)               => ()
   entrypoint burn                 : (int)                   => ()
   entrypoint mint                 : (address, int)          => ()
+  entrypoint swap                 : ()                      => ()
+  entrypoint check_swap           : (address)               => int
 
 
 
