@@ -57,6 +57,7 @@ contract FungibleTokenInterface =
   datatype event =
     Transfer(indexed address, indexed address, indexed int)
 
+  entrypoint aex9_extensions : () => list(string)
   entrypoint meta_info : () => meta_info
   entrypoint total_supply : () => int
   entrypoint owner : () => address
@@ -66,6 +67,15 @@ contract FungibleTokenInterface =
 ```
 
 ## Methods
+
+
+### aex9_extensions\(\)
+
+This function **returns** a hardcoded list of all implemented extensions on the deployed contract.
+
+```text
+entrypoint aex9_extensions() : list(string)
+```
 
 ### meta_info\(\)
 
@@ -162,7 +172,7 @@ Transfer(indexed address, indexed address, indexed int)
 
 This section covers the extensability of the basic token - e.g. mintable, allowances.
 
-## Extension Mintable
+## Extension Mintable ("mintable")
 
 ### mint\(\)
 
@@ -265,7 +275,7 @@ Allowance(indexed address, indexed address, indexed int)
 
 *TODO*
 
-## Extension Swappable
+## Extension Swappable ("swappable")
 
 *TODO*
 
