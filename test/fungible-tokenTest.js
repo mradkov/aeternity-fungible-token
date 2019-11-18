@@ -61,6 +61,11 @@ describe('Fungible Token Contract', () => {
         assert.equal(deploy.result.returnType, 'ok');
     });
 
+    it('Fungible Token Contract: Return Extensions', async () => {
+        const aex9Extensions = await contract.methods.aex9_extensions();
+        assert.isEmpty(aex9Extensions.decodedResult);
+    });
+
     it('Deploying Fungible Token Contract: Meta Information', async () => {
         let contractSource = utils.readFileRelative('./contracts/fungible-token.aes', 'utf-8');
         let deployTestContract = await owner.getContractInstance(contractSource);
