@@ -51,22 +51,24 @@ A standard interface allows any tokens to be re-used by other applications: from
 ### Interface
 
 ```text
+@compiler >= 4
+
 contract FungibleTokenInterface =
   record meta_info =
     { name : string
     , symbol : string
     , decimals : int }
-    
+
   datatype event =
     Transfer(address, address, int)
 
-  entrypoint aex9_extensions : () => list(string)
-  entrypoint meta_info : () => meta_info
-  entrypoint total_supply : () => int
-  entrypoint owner : () => address
-  entrypoint balances : () => map(address, int)
-  entrypoint balance : (address) => option(int)
-  entrypoint transfer : (address, int) => ()
+  entrypoint aex9_extensions : ()             => list(string)
+  entrypoint meta_info       : ()             => meta_info
+  entrypoint total_supply    : ()             => int
+  entrypoint owner           : ()             => address
+  entrypoint balances        : ()             => map(address, int)
+  entrypoint balance         : (address)      => option(int)
+  entrypoint transfer        : (address, int) => ()
 ```
 
 ## Methods
