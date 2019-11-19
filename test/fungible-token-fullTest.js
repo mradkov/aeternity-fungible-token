@@ -195,9 +195,6 @@ describe('Fungible Token Full Contract', () => {
             for_account: otherKeypair.publicKey
         });
         assert.equal(get_allowance_after.decodedResult, 10);
-
-        const balances = await contract.methods.balances();
-        assert.deepEqual(balances.decodedResult, [[ownerKeypair.publicKey, 10], [otherKeypair.publicKey, 0]]);
     });
 
     it('Fungible Token Contract: Decrease Allowance below zero (should fail)', async () => {
