@@ -14,49 +14,39 @@
  *  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  *  PERFORMANCE OF THIS SOFTWARE.
  */
-const Ae = require('@aeternity/aepp-sdk').Universal;
+
+const Universal = require('@aeternity/aepp-sdk').Universal;
 const Crypto = require('@aeternity/aepp-sdk').Crypto;
 const Bytes = require('@aeternity/aepp-sdk/es/utils/bytes');
-var blake2b = require('blake2b');
-
-const config = {
-    host: 'http://localhost:3001/',
-    internalHost: 'http://localhost:3001/internal/',
-    compilerUrl: 'http://localhost:3080'
-};
+const MemoryAccount = require('@aeternity/aepp-sdk').MemoryAccount;
+const FUNGIBLE_TOKEN_FULL_SOURCE = utils.readFileRelative('./contracts/fungible-token-full.aes', 'utf-8');
+const FUNGIBLE_TOKEN_MIGRATION_SOURCE = utils.readFileRelative('./contracts/examples/fungible-token-migration.aes', 'utf-8');
+const blake2b = require('blake2b');
 
 describe('Fungible Token Migration Contract', () => {
 
-    let ownerKeypair, otherKeypair, owner, otherClient, contract, migrationTokenContract;
+    let contract, migrationTokenContract, client;
 
     before(async () => {
-        ownerKeypair = wallets[0];
-        owner = await Ae({
-            url: config.host,
-            internalUrl: config.internalHost,
-            keypair: ownerKeypair,
-            nativeMode: true,
-            networkId: 'ae_devnet',
-            compilerUrl: config.compilerUrl
-        });
-
-        otherKeypair = wallets[1];
-        otherClient = await Ae({
-            url: config.host,
-            internalUrl: config.internalHost,
-            keypair: otherKeypair,
-            nativeMode: true,
-            networkId: 'ae_devnet',
-            compilerUrl: config.compilerUrl
-        });
-    });
+        client = await Universal({
+          url: "http://localhost:3001",
+          internalUrl: "http://localhost:3001/internal",
+          accounts: [
+              MemoryAccount({ keypair: wallets[0] }),
+              MemoryAccount({ keypair: wallets[1] }),
+              MemoryAccount({ keypair: wallets[2] }),
+              MemoryAccount({ keypair: wallets[3] })
+          ],
+          networkId: "ae_devnet",
+          compilerUrl: "http://localhost:3080"
+        })
+      });
 
     const hashTopic = topic => blake2b(32).update(Buffer.from(topic)).digest('hex');
     const topicHashFromResult = result => Bytes.toBytes(result.result.log[0].topics[0], true).toString('hex');
 
     it('Fungible Token Contract: Deploy token to be migrated', async () => {
-        let contractSource = utils.readFileRelative('./contracts/fungible-token-full.aes', 'utf-8');
-        contract = await owner.getContractInstance(contractSource);
+        contract = await client.getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE);
         const deploy = await contract.deploy(['AE Test Token', 0, 'AETT']);
         assert.equal(deploy.result.returnType, 'ok');
     });
@@ -68,46 +58,42 @@ describe('Fungible Token Migration Contract', () => {
     });
 
     it('Fungible Token Contract: Swap', async () => {
-        await contract.methods.mint(ownerKeypair.publicKey, 10);
+        await contract.methods.mint(wallets[0].publicKey, 10);
         const swap = await contract.methods.swap();
         assert.equal(topicHashFromResult(swap), hashTopic('Swap'));
-        assert.equal(Crypto.addressFromDecimal(swap.result.log[0].topics[1]), ownerKeypair.publicKey);
+        assert.equal(Crypto.addressFromDecimal(swap.result.log[0].topics[1]), wallets[0].publicKey);
         assert.equal(swap.result.log[0].topics[2], 10);
 
-        const check_swap = await contract.methods.check_swap(ownerKeypair.publicKey);
+        const check_swap = await contract.methods.check_swap(wallets[0].publicKey);
         assert.equal(check_swap.decodedResult, 10);
-        const balance = await contract.methods.balance(ownerKeypair.publicKey);
+        const balance = await contract.methods.balance(wallets[0].publicKey);
         assert.equal(balance.decodedResult, 0);
     });
 
     it('Migration Token: Initialize Token to be migrated to', async () => {
-        let contractSource = utils.readFileRelative('./contracts/examples/fungible-token-migration.aes', 'utf-8');
-        migrationTokenContract = await owner.getContractInstance(contractSource);
+        migrationTokenContract = await client.getContractInstance(FUNGIBLE_TOKEN_MIGRATION_SOURCE);
         const deploy = await migrationTokenContract.deploy(['AE Test Token', 0, 'AETT', contract.deployInfo.address]);
         assert.equal(deploy.result.returnType, 'ok');
 
-        const check_swap = await contract.methods.check_swap(ownerKeypair.publicKey);
+        const check_swap = await contract.methods.check_swap(wallets[0].publicKey);
         assert.equal(check_swap.decodedResult, 10);
 
         const migrate = await migrationTokenContract.methods.migrate();
         assert.equal(topicHashFromResult(migrate), hashTopic('Mint'));
-        assert.equal(Crypto.addressFromDecimal(migrate.result.log[0].topics[1]), ownerKeypair.publicKey);
+        assert.equal(Crypto.addressFromDecimal(migrate.result.log[0].topics[1]), wallets[0].publicKey);
         assert.equal(migrate.result.log[0].topics[2], 10);
         assert.equal(migrate.result.returnType, 'ok');
     });
 
     it('Migration Token: User with no swapped tokens', async () => {
-        let contractSource = utils.readFileRelative('./contracts/examples/fungible-token-migration.aes', 'utf-8');
-        const otherClientContract = await otherClient.getContractInstance(contractSource, {contractAddress: migrationTokenContract.deployInfo.address});
+        const otherContract = await client.getContractInstance(FUNGIBLE_TOKEN_MIGRATION_SOURCE, {contractAddress: migrationTokenContract.deployInfo.address});
 
-        const migrate = await otherClientContract.methods.migrate().catch(e => e);
-        assert.equal(migrate.returnType, 'revert');
+        const migrate = await otherContract.methods.migrate({ onAccount: wallets[1].publicKey }).catch(e => e);
         assert.include(migrate.decodedError, "MIGRATION_AMOUNT_NOT_GREATER_ZERO");
     });
 
     it('Migration Token: User already migrated', async () => {
         const migrate = await migrationTokenContract.methods.migrate().catch(e => e);
-        assert.equal(migrate.returnType, 'revert');
         assert.include(migrate.decodedError, "ACCOUNT_ALREADY_MIGRATED");
     });
 

@@ -59,7 +59,7 @@ contract FungibleToken =
     // If the provided value for `decimals` is negative abort the execution
     require_non_negative_value(decimals)
     { owner        = Call.caller,
-      total_supply = 0,
+      total_supply = 100,
       balances     = {[Call.caller] = 100},
       meta_info    = { name = name, symbol = symbol, decimals = decimals } }
 
