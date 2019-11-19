@@ -96,15 +96,19 @@ describe('Fungible Token Migration Contract', () => {
         assert.equal(migrate.result.returnType, 'ok');
     });
 
-    it('Migration Token: User with', async () => {
+    it('Migration Token: User with no swapped tokens', async () => {
         let contractSource = utils.readFileRelative('./contracts/examples/fungible-token-migration.aes', 'utf-8');
-        migrationTokenContract = await otherClient.getContractInstance(contractSource);
-        const deploy = await migrationTokenContract.deploy(['AE Test Token', 0, 'AETT', contract.deployInfo.address]);
-        assert.equal(deploy.result.returnType, 'ok');
+        const otherClientContract = await otherClient.getContractInstance(contractSource, {contractAddress: migrationTokenContract.deployInfo.address});
 
-        const migrate = await migrationTokenContract.methods.migrate().catch(e => e);
+        const migrate = await otherClientContract.methods.migrate().catch(e => e);
         assert.equal(migrate.returnType, 'revert');
         assert.include(migrate.decodedError, "MIGRATION_AMOUNT_NOT_GREATER_ZERO");
+    });
+
+    it('Migration Token: User already migrated', async () => {
+        const migrate = await migrationTokenContract.methods.migrate().catch(e => e);
+        assert.equal(migrate.returnType, 'revert');
+        assert.include(migrate.decodedError, "ACCOUNT_ALREADY_MIGRATED");
     });
 
 });
