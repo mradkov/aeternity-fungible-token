@@ -14,12 +14,11 @@
  *  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  *  PERFORMANCE OF THIS SOFTWARE.
  */
+
 const Universal = require('@aeternity/aepp-sdk').Universal;
-const Bytes = require('@aeternity/aepp-sdk/es/utils/bytes');
 const MemoryAccount = require('@aeternity/aepp-sdk').MemoryAccount;
 const FUNGIBLE_TOKEN_SOURCE = utils.readFileRelative('./contracts/fungible-token.aes', 'utf-8');
 const FUNGIBLE_TOKEN_WITH_BALANCE_SOURCE = utils.readFileRelative('./contracts/examples/fungible-token-with-balance.aes', 'utf-8');
-const blake2b = require('blake2b');
 
 describe('Fungible Token Contract', () => {
 
@@ -76,7 +75,7 @@ describe('Fungible Token Contract', () => {
 
     it('Fungible Token Contract: return owner', async () => {
         const owner = await contract.methods.owner();
-        assert.equal(owner.decodedResult, ownerKeypair.publicKey);
+        assert.equal(owner.decodedResult, wallets[0].publicKey);
     });
 
     it('Transfer: should have balance', async () => {
@@ -103,19 +102,11 @@ describe('Fungible Token Contract', () => {
         const balanceOfOwner = await deployTestContract.methods.balance(wallets[0].publicKey);
         assert.equal(balanceOfOwner.decodedResult, 58);
 
-        await deployTestContract.methods.transfer(otherKeypair.publicKey, 42);
-
-        const balanceOfOwner = await deployTestContract.methods.balance(ownerKeypair.publicKey);
-        assert.equal(balanceOfOwner.decodedResult, 58);
-
-        const balanceOfReceiver = await deployTestContract.methods.balance(otherKeypair.publicKey);
-        assert.equal(balanceOfReceiver.decodedResult, 42);
-
         const total_supply = await deployTestContract.methods.total_supply();
         assert.equal(total_supply.decodedResult, 100);
 
         const balances = await deployTestContract.methods.balances();
-        assert.deepEqual(balances.decodedResult, [[ownerKeypair.publicKey, 58], [otherKeypair.publicKey, 42]]);
+        assert.deepEqual(balances.decodedResult, [[wallets[0].publicKey, 58], [wallets[1].publicKey, 42]]);
     });
 
     it('Transfer: should NOT transfer negative value', async () => {
@@ -124,18 +115,13 @@ describe('Fungible Token Contract', () => {
         const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
         assert.equal(deploy.result.returnType, 'ok');
 
-        await deployTestContract.methods.transfer(wallets[1].publicKey, -42).catch(e => e);
-
         const balanceOfOwner = await deployTestContract.methods.balance(wallets[0].publicKey);
         assert.equal(balanceOfOwner.decodedResult, 100);
 
-        const transfer = await deployTestContract.methods.transfer(otherKeypair.publicKey, -42).catch(e => e);
+        const transfer = await deployTestContract.methods.transfer(wallets[1].publicKey, -42).catch(e => e);
         assert.include(transfer.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
 
-        const balanceOfOwner = await deployTestContract.methods.balance(ownerKeypair.publicKey);
-        assert.equal(balanceOfOwner.decodedResult, 100);
-
-        const balanceOfReceiver = await deployTestContract.methods.balance(otherKeypair.publicKey);
+        const balanceOfReceiver = await deployTestContract.methods.balance(wallets[1].publicKey);
         assert.equal(balanceOfReceiver.decodedResult, undefined);
 
         const total_supply = await deployTestContract.methods.total_supply();
@@ -155,13 +141,7 @@ describe('Fungible Token Contract', () => {
         const balanceOfOwner = await deployTestContract.methods.balance(wallets[0].publicKey);
         assert.equal(balanceOfOwner.decodedResult, 100);
 
-        const transfer = await deployTestContract.methods.transfer(otherKeypair.publicKey, 120).catch(e => e);
-        assert.include(transfer.decodedError, "ACCOUNT_INSUFFICIENT_BALANCE");
-
-        const balanceOfOwner = await deployTestContract.methods.balance(ownerKeypair.publicKey);
-        assert.equal(balanceOfOwner.decodedResult, 100);
-
-        const balanceOfReceiver = await deployTestContract.methods.balance(otherKeypair.publicKey);
+        const balanceOfReceiver = await deployTestContract.methods.balance(wallets[1].publicKey);
         assert.equal(balanceOfReceiver.decodedResult, undefined);
     });
 
