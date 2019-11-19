@@ -1,0 +1,159 @@
+// ISC License
+//
+// Copyright (c) 2017, aeternity developers
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+
+// THIS IS NOT SECURITY AUDITED
+// DO NEVER USE THIS WITHOUT SECURITY AUDIT FIRST
+
+@compiler >= 4
+
+contract MigrateToken =
+  entrypoint check_swap : (address) => int
+
+/// @title - Fungible token example for migration
+contract FungibleTokenMigration =
+
+  // This defines the state of type record encapsulating the conract's mutable state
+  record state =
+    { owner        : address      // the smart contract's owner address
+    , total_supply : int          // total token supply
+    , balances     : balances     // balances for each account
+    , meta_info    : meta_info    // token meta info (name, symbol, decimals)
+    , swapped      : map(address, int)
+    , migrate_from : MigrateToken
+    , migrated     : map(address, int) }
+
+  // This is the meta information record type
+  record meta_info =
+    { name     : string
+    , symbol   : string
+    , decimals : int }
+
+  // This is a type alias for the balances map
+  type balances = map(address, int)
+
+  // Declaration and structure of datatype event
+  // and events that will be emitted on changes
+  datatype event =
+    Transfer(indexed address, indexed address, indexed int)
+    | Burn(indexed address, indexed int)
+    | Mint(indexed address, indexed int)
+    | Swap(indexed address, indexed int)
+
+  // List of supported extensions
+  entrypoint aex9_extensions() : list(string) = ["mintable", "swappable"]
+
+  // Create a fungible token with
+  // the following `name` `symbol` and `decimals`
+  // and set the inital smart contract state
+  entrypoint init(name: string, decimals : int, symbol : string, migrate_from : MigrateToken) =
+    // If the `name` lenght is less than 1 symbol abort the execution
+    require(String.length(name) >= 1, "STRING_TOO_SHORT_NAME")
+    // If the `symbol` length is less than 1 symbol abort the execution
+    require(String.length(symbol) >= 1, "STRING_TOO_SHORT_SYMBOL")
+    // If the provided value for `decimals` is negative abort the execution
+    require_non_negative_value(decimals)
+    { owner        = Call.caller,
+      total_supply = 0,
+      balances     = {},
+      meta_info    = { name = name, symbol = symbol, decimals = decimals },
+      swapped      = {},
+      migrate_from = migrate_from,
+      migrated = {} }
+
+  // Get the token meta info
+  entrypoint meta_info() : meta_info =
+    state.meta_info
+
+  // Get the token total supply
+  entrypoint total_supply() : int =
+    state.total_supply
+
+  // Get the token owner address
+  entrypoint owner() : address =
+    state.owner
+
+  // Get the balances state
+  entrypoint balances() : balances =
+    state.balances
+
+  // Get balance for address of `owner`
+  // returns option(int)
+  // If the `owner` address haven't had any token balance
+  // in this smart contract the return value is None
+  // Otherwise Some(int) is returned with the current balance
+  entrypoint balance(owner: address) : option(int) =
+    Map.lookup(owner, state.balances)
+
+  /// Transfer the balance of `value` from `Call.caller` to `to_account` account
+  stateful entrypoint transfer(to_account: address, value: int) =
+    internal_transfer(Call.caller, to_account, value)
+
+  // Destroys `value` tokens from `Call.caller`, reducing the total supply.
+  // `Burn` event with `Call.caller` address and `value`.
+  stateful entrypoint burn(value: int) =
+    require_balance(Call.caller, value)
+    require_non_negative_value(value)
+    put(state{ total_supply = state.total_supply - value, balances[Call.caller] @ b = b - value })
+    Chain.event(Burn(Call.caller, value))
+
+  // Creates `value` tokens and assigns them to `account`, increasing the total supply.
+  // Emits a `Mint` event with `account` and `value`.
+  stateful entrypoint mint(account: address, value: int) =
+    require_owner()
+    require_non_negative_value(value)
+    put(state{ total_supply = state.total_supply + value, balances[account = 0] @ b = b + value })
+    Chain.event(Mint(account, value))
+
+  stateful entrypoint migrate() =
+    require(!Map.member(Call.caller, state.migrated), "ACCOUNT_ALREADY_MIGRATED")
+    let migration_amount = state.migrate_from.check_swap(Call.caller)
+    require(migration_amount > 0, "MIGRATION_AMOUNT_NOT_GREATER_ZERO")
+    put(state{ total_supply                  = state.total_supply + migration_amount,
+               balances[Call.caller = 0] @ b = b + migration_amount,
+               migrated[Call.caller]         = migration_amount })
+    Chain.event(Mint(Call.caller, migration_amount))
+    state.migrate_from
+
+  stateful entrypoint swap() =
+    let balance = Map.lookup_default(Call.caller, state.balances, 0)
+    burn(balance)
+    put(state{ swapped[Call.caller] = balance })
+    Chain.event(Swap(Call.caller, balance))
+
+  stateful entrypoint check_swap(account: address) : int =
+    Map.lookup_default(account, state.swapped, 0)
+
+  // INTERNAL FUNCTIONS
+
+  function require_owner() =
+    require(Call.caller == state.owner, "ONLY_OWNER_CALL_ALLOWED")
+
+  function require_non_negative_value(value : int) =
+    require(value >= 0, "NON_NEGATIVE_VALUE_REQUIRED")
+
+  function require_balance(account : address, value : int) =
+    switch(balance(account))
+      Some(balance) =>
+        require(balance >= value, "ACCOUNT_INSUFFICIENT_BALANCE")
+      None => abort("BALANCE_ACCOUNT_NOT_EXISTENT")
+
+  stateful function internal_transfer(from_account: address, to_account: address, value: int) =
+    require_non_negative_value(value)
+    require_balance(from_account, value)
+    put(state{ balances[from_account] @ b = b - value })
+    put(state{ balances[to_account = 0] @ b = b + value })
+    Chain.event(Transfer(from_account, to_account, value))
