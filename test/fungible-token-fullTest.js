@@ -93,17 +93,17 @@ describe('Fungible Token Full Contract', () => {
     });
 
     it('Fungible Token Contract: Burn Tokens', async () => {
-        const mint = await contract.methods.mint(ownerKeypair.publicKey, 10);
+        await contract.methods.mint(wallets[0].publicKey, 10);
 
         const burn = await contract.methods.burn(5);
         assert.equal(topicHashFromResult(burn), hashTopic('Burn'));
-        assert.equal(Crypto.addressFromDecimal(burn.result.log[0].topics[1]), ownerKeypair.publicKey);
+        assert.equal(Crypto.addressFromDecimal(burn.result.log[0].topics[1]), wallets[0].publicKey);
         assert.equal(burn.result.log[0].topics[2], 5);
         assert.equal(burn.result.returnType, 'ok');
 
         const totalSupply = await contract.methods.total_supply();
         assert.deepEqual(totalSupply.decodedResult, 5);
-        const balance = await contract.methods.balance(ownerKeypair.publicKey);
+        const balance = await contract.methods.balance(wallets[0].publicKey);
         assert.equal(balance.decodedResult, 5);
 
         const burnFailAmount = await contract.methods.burn(-10).catch(e => e);
