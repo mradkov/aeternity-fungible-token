@@ -2,11 +2,14 @@
 
 This is an example reference implementation of the proposed aeternity fungible token standard (AEX-9).
 
-Fungible token is a technical standard used for smart contracts on the blockchain for implementing tokens. Fungible token defines a common list of rules for tokens to follow within the larger ecosystem, allowing developers to accurately predict interaction between tokens. These rules include how the tokens are transferred between addresses and how data within each token is accessed. Fungible tokens are interchangeable, divisible, and identical tokens that are useful as money.
+A Fungible token is a technical standard used for smart contracts on the blockchain for implementing tokens/digital assets. Fungible token defines a common list of rules for tokens to follow within the larger ecosystem, allowing developers to accurately predict interaction between tokens. These rules include how the tokens are transferred between addresses and how data within each token is accessed. Fungible tokens are interchangeable, divisible, and identical tokens that are useful as in various use-cases.
 
 How it works?
-Upon deployment, the token sets its owner - the Call.caller (deployer). The owner has special privilege - the ability to create (mint) new tokens. When token is created it is associated with a user - the account parameter. The token owner can act upon their tokens in various ways. They can set transfer it, allow it to be transferred on his/her behalf or completely destroy it.
+Upon deployment, the token sets its owner - the `Call.caller` (deployer).
 
+In the case you are using `mintable` extension the owner has special privilege - the ability to create (`mint`) new tokens. When token is created it is associated with a user - the account parameter.
+
+Each token owner can act upon their tokens in various ways. They can `transfer` it, allow for it to be transferred on their behalf or completely destroy it (using `burn`).
 
 # AEX 9
 
