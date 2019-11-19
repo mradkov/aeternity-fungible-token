@@ -13,8 +13,8 @@ Upon deployment, the token sets its owner - the Call.caller (deployer). The owne
 ```
 AEX: 9
 Title: Fungible Token Standard
-Author: Milen Radkov (@mradkov), Philipp Piwowarsky (@thepiwo)
-License: BSD-3-Clause
+Author: @mradkov, @thepiwo
+License: ISC
 Discussions-To: https://forum.aeternity.com/t/aex-9-fungible-token/3565
 Status: Draft
 Type: Standards Track
