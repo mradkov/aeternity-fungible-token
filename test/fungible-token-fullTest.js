@@ -25,7 +25,7 @@ const config = {
     compilerUrl: 'http://localhost:3080'
 };
 
-describe('Fungible Token Full Contract', () => {
+describe.skip('Fungible Token Full Contract', () => {
 
     let ownerKeypair, otherKeypair, owner, otherClient, contract;
 
