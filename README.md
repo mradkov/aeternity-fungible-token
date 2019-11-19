@@ -19,7 +19,7 @@ Title: Fungible Token Standard
 Author: @mradkov, @thepiwo
 License: ISC
 Discussions-To: https://forum.aeternity.com/t/aex-9-fungible-token/3565
-Status: Draft
+Status: Review
 Type: Standards Track
 Created: 2019-05-11
 ```
