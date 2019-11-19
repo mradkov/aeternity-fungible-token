@@ -43,7 +43,6 @@ contract FungibleToken =
   // and events that will be emitted on changes
   datatype event = Transfer(address, address, int)
 
-
   // List of implemented extensions for the deployed contract
   entrypoint aex9_extensions() : list(string) = []
 

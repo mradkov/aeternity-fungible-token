@@ -30,7 +30,7 @@ contract FungibleTokenFull =
     , balances     : balances     // balances for each account
     , meta_info    : meta_info    // token meta info (name, symbol, decimals)
     , allowances   : allowances   // owner of account approves the transfer of an amount to another account
-    , swapped      : map(address, int) } 
+    , swapped      : map(address, int) }
 
   // This is the meta information record type
   record meta_info =
@@ -100,8 +100,9 @@ contract FungibleTokenFull =
   entrypoint balance(owner: address) : option(int) =
     Map.lookup(owner, state.balances)
 
-  // Get all swapps stored in state
-  entrypoint swapped() : map(address, int) = state.swapped
+  // Get all swapped tokens stored in state
+  entrypoint swapped() : map(address, int) =
+    state.swapped
 
   // Get the allowances state
   entrypoint allowances() : allowances =

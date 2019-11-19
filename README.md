@@ -337,7 +337,7 @@ stateful entrypoint check_swap(account: address) : int
 
 ### swapped\(\)
 
-This function returns all of the swapps that are stored in the contract's state. 
+This function returns all of the swapped tokens that are stored in contract state. 
 
 ```text
 stateful entrypoint swapped() : map(address, int)
