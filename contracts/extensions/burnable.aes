@@ -18,7 +18,7 @@
 // THIS IS NOT SECURITY AUDITED
 // DO NEVER USE THIS WITHOUT SECURITY AUDIT FIRST
 
-  datatype event = Burn(indexed address, indexed int)
+  datatype event = Burn(address, int)
 
   // Destroys `value` tokens from `Call.caller`, reducing the total supply.
   // `Burn` event with `Call.caller` address and `value`.

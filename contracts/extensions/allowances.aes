@@ -28,10 +28,10 @@
 
   // This is a type alias for the allowances map
   type allowances = map(allowance_accounts, int)
+  
   // Declaration and structure of datatype event
   // and events that will be emitted on changes
-  datatype event =
-    Allowance(indexed address, indexed address, indexed int)
+  datatype event = Allowance(address, address, int)
 
   // and set the inital smart contract state
   entrypoint init() =

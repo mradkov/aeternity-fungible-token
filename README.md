@@ -55,7 +55,7 @@ contract FungibleTokenInterface =
     , decimals : int }
     
   datatype event =
-    Transfer(indexed address, indexed address, indexed int)
+    Transfer(address, address, int)
 
   entrypoint aex9_extensions : () => list(string)
   entrypoint meta_info : () => meta_info
@@ -159,7 +159,7 @@ This event MUST be triggered and emitted when tokens are transferred, including 
 The transfer event arguments should be as follows: `(from_account, to_account, value)`
 
 ```text
-Transfer(indexed address, indexed address, indexed int)
+Transfer(address, address, int)
 ```
 
 | parameter | type |
@@ -197,7 +197,7 @@ stateful entrypoint mint(account: address, value: int) : ()
 The mint event arguments should be as follows: `(account,  value)`
 
 ```text
-Mint(indexed address, indexed int)
+Mint(address, int)
 ```
 
 | parameter | type |
@@ -226,7 +226,7 @@ stateful entrypoint burn(value: int) : ()
 The burn event arguments should be as follows: `(account,  value)`
 
 ```text
-Burn(indexed address, indexed int)
+Burn(address, int)
 ```
 
 | parameter | type |
@@ -294,7 +294,7 @@ record allowance_accounts =
 The approval event arguments should be as follows: `(from_account, for_account, value)`
 
 ```text
-Allowance(indexed address, indexed address, indexed int)
+Allowance(address, address, int)
 ```
 
 | parameter | type |
@@ -354,7 +354,7 @@ stateful entrypoint swapped() : map(address, int)
 The swap event arguments should be as follows: `(account,  value)`
 
 ```text
-Swap(indexed address, indexed int)
+Swap(address, int)
 ```
 
 | parameter | type |
