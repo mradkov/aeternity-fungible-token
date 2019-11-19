@@ -54,7 +54,7 @@ describe('Fungible Token Contract', () => {
     const hashTopic = topic => blake2b(32).update(Buffer.from(topic)).digest('hex');
     const topicHashFromResult = result => Bytes.toBytes(result.result.log[0].topics[0], true).toString('hex');
 
-    beforeEach(async () => {
+    it('Deploy Basic Token', async () => {
         let contractSource = utils.readFileRelative('./contracts/fungible-token.aes', 'utf-8');
         contract = await owner.getContractInstance(contractSource);
         const deploy = await contract.deploy(['AE Test Token', 0, 'AETT']);
@@ -82,6 +82,116 @@ describe('Fungible Token Contract', () => {
 
         const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT']).catch(e => e);
         assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
+    });
+
+    it('Transfer: should have balance', async () => {
+        let contractSource = utils.readFileRelative('./contracts/examples/fungible-token-with-balance.aes', 'utf-8');
+        let deployTestContract = await owner.getContractInstance(contractSource);
+
+        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
+        assert.equal(deploy.result.returnType, 'ok');
+        const metaInfo = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfo.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 0});
+
+        const deployDecimals = await deployTestContract.deploy(['AE Test Token', 10, 'AETT']);
+        assert.equal(deployDecimals.result.returnType, 'ok');
+        const metaInfoDecimals = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfoDecimals.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 10});
+
+        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT']).catch(e => e);
+        assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
+
+        const balance = await deployTestContract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balance.decodedResult, 100);
+    });
+
+    it('Transfer: should transfer to other account', async () => {
+        let contractSource = utils.readFileRelative('./contracts/examples/fungible-token-with-balance.aes', 'utf-8');
+        let deployTestContract = await owner.getContractInstance(contractSource);
+
+        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
+        assert.equal(deploy.result.returnType, 'ok');
+        const metaInfo = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfo.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 0});
+
+        const deployDecimals = await deployTestContract.deploy(['AE Test Token', 10, 'AETT']);
+        assert.equal(deployDecimals.result.returnType, 'ok');
+        const metaInfoDecimals = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfoDecimals.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 10});
+
+        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT']).catch(e => e);
+        assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
+
+        const balance = await deployTestContract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balance.decodedResult, 100);
+
+        const transfer = await deployTestContract.methods.transfer(otherKeypair.publicKey, 42);
+
+        const balanceOfOwner = await deployTestContract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balanceOfOwner.decodedResult, 58)
+
+        const balanceOfReceiver = await deployTestContract.methods.balance(otherKeypair.publicKey);
+        assert.equal(balanceOfReceiver.decodedResult, 42)
+    });
+
+    it('Transfer: should NOT transfer negative value', async () => {
+        let contractSource = utils.readFileRelative('./contracts/examples/fungible-token-with-balance.aes', 'utf-8');
+        let deployTestContract = await owner.getContractInstance(contractSource);
+
+        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
+        assert.equal(deploy.result.returnType, 'ok');
+        const metaInfo = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfo.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 0});
+
+        const deployDecimals = await deployTestContract.deploy(['AE Test Token', 10, 'AETT']);
+        assert.equal(deployDecimals.result.returnType, 'ok');
+        const metaInfoDecimals = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfoDecimals.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 10});
+
+        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT']).catch(e => e);
+        assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
+
+        const balance = await deployTestContract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balance.decodedResult, 100, "BALANCE_IS_NOT_MATCHING");
+
+        const transfer = await deployTestContract.methods.transfer(otherKeypair.publicKey, -42).catch(e => e);
+        assert.include(transfer.decodedError, "NON_NEGATIVE_VALUE_REQUIRED")
+
+        const balanceOfOwner = await deployTestContract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balanceOfOwner.decodedResult, 100)
+
+        const balanceOfReceiver = await deployTestContract.methods.balance(otherKeypair.publicKey);
+        assert.equal(balanceOfReceiver.decodedResult, undefined)
+    });
+
+    it('Transfer: should NOT go below zero', async () => {
+        let contractSource = utils.readFileRelative('./contracts/examples/fungible-token-with-balance.aes', 'utf-8');
+        let deployTestContract = await owner.getContractInstance(contractSource);
+
+        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
+        assert.equal(deploy.result.returnType, 'ok');
+        const metaInfo = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfo.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 0});
+
+        const deployDecimals = await deployTestContract.deploy(['AE Test Token', 10, 'AETT']);
+        assert.equal(deployDecimals.result.returnType, 'ok');
+        const metaInfoDecimals = await deployTestContract.methods.meta_info();
+        assert.deepEqual(metaInfoDecimals.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 10});
+
+        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT']).catch(e => e);
+        assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
+
+        const balance = await deployTestContract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balance.decodedResult, 100, "BALANCE_IS_NOT_MATCHING");
+
+        const transfer = await deployTestContract.methods.transfer(otherKeypair.publicKey, 120).catch(e => e);
+        assert.include(transfer.decodedError, "ACCOUNT_INSUFFICIENT_BALANCE")
+
+        const balanceOfOwner = await deployTestContract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balanceOfOwner.decodedResult, 100)
+
+        const balanceOfReceiver = await deployTestContract.methods.balance(otherKeypair.publicKey);
+        assert.equal(balanceOfReceiver.decodedResult, undefined)
     });
 
 });
