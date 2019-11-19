@@ -41,8 +41,7 @@ contract FungibleToken =
 
   // Declaration and structure of datatype event
   // and events that will be emitted on changes
-  datatype event =
-    Transfer(indexed address, indexed address, indexed int)
+  datatype event = Transfer(address, address, int)
 
 
   // List of implemented extensions for the deployed contract

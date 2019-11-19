@@ -18,7 +18,7 @@
 // THIS IS NOT SECURITY AUDITED
 // DO NEVER USE THIS WITHOUT SECURITY AUDIT FIRST
 
-  datatype event = Mint(indexed address, indexed int)
+  datatype event = Mint(address, int)
 
   // Creates `value` tokens and assigns them to `account`, increasing the total supply.
   // Emits a `Mint` event with `account` and `value`.

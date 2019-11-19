@@ -50,11 +50,11 @@ contract FungibleTokenFull =
   // Declaration and structure of datatype event
   // and events that will be emitted on changes
   datatype event =
-    Transfer(indexed address, indexed address, indexed int)
-    | Allowance(indexed address, indexed address, indexed int)
-    | Burn(indexed address, indexed int)
-    | Mint(indexed address, indexed int)
-    | Swap(indexed address, indexed int)
+    Transfer(address, address, int)
+    | Allowance(address, address, int)
+    | Burn(address, int)
+    | Mint(address, int)
+    | Swap(address, int)
 
   // List of supported extensions
   entrypoint aex9_extensions() : list(string) = ["allowances", "mintable", "burnable", "swappable"]
