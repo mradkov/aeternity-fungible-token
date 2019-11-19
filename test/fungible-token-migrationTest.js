@@ -88,13 +88,11 @@ describe('Fungible Token Migration Contract', () => {
         const otherContract = await client.getContractInstance(FUNGIBLE_TOKEN_MIGRATION_SOURCE, {contractAddress: migrationTokenContract.deployInfo.address});
 
         const migrate = await otherContract.methods.migrate({ onAccount: wallets[1].publicKey }).catch(e => e);
-        assert.equal(migrate.returnType, 'revert');
         assert.include(migrate.decodedError, "MIGRATION_AMOUNT_NOT_GREATER_ZERO");
     });
 
     it('Migration Token: User already migrated', async () => {
         const migrate = await migrationTokenContract.methods.migrate().catch(e => e);
-        assert.equal(migrate.returnType, 'revert');
         assert.include(migrate.decodedError, "ACCOUNT_ALREADY_MIGRATED");
     });
 

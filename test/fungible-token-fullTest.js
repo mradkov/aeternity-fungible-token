@@ -111,8 +111,18 @@ describe('Fungible Token Full Contract', () => {
         const get_allowance = await contract.methods.allowance({
             from_account: wallets[0].publicKey,
             for_account: wallets[1].publicKey
-        }).catch(e => e);
+        });
         assert.equal(get_allowance.decodedResult, 10);
+
+        // TODO implement
+        //const allowance_for_caller = await contract.methods.allowance_for_caller(otherKeypair.publicKey);
+        //assert.equal(allowance_for_caller.decodedResult, 0);
+
+        const allowances = await contract.methods.allowances();
+        assert.deepEqual(allowances.decodedResult, [[{
+            from_account: ownerKeypair.publicKey,
+            for_account: otherKeypair.publicKey
+        }, 10]]);
     });
 
     it('Fungible Token Contract: Increase Allowance', async () => {
@@ -123,7 +133,7 @@ describe('Fungible Token Full Contract', () => {
         const get_allowance_after = await contract.methods.allowance({
             from_account: wallets[0].publicKey,
             for_account: wallets[1].publicKey
-        }).catch(e => e);
+        });
         assert.equal(get_allowance_after.decodedResult, 20);
     });
 
@@ -132,11 +142,30 @@ describe('Fungible Token Full Contract', () => {
 
         await contract.methods.change_allowance(wallets[1].publicKey, -5).catch(e => e);
 
+    it('Fungible Token Contract: Transfer Allowance', async () => {
+        await contract.methods.create_allowance(otherKeypair.publicKey, 10);
+
+        // TODO implement
+        /*await contract.methods.transfer_allowance(ownerKeypair.publicKey, otherKeypair.publicKey, 5);
         const get_allowance_after = await contract.methods.allowance({
             from_account: wallets[0].publicKey,
             for_account: wallets[1].publicKey
-        }).catch(e => e);
+        });
         assert.equal(get_allowance_after.decodedResult, 5);
+
+        const balances = await deployTestContract.methods.balances();
+        assert.deepEqual(balances.decodedResult, [[ownerKeypair.publicKey, 5], [otherKeypair.publicKey, 5]]);*/
+    });
+    it('Fungible Token Contract: Transfer Allowance (should fail)', async () => {
+        await contract.methods.create_allowance(otherKeypair.publicKey, 10);
+
+        const allowanceFailAmount = await contract.methods.transfer_allowance(ownerKeypair.publicKey, otherKeypair.publicKey, 15).catch(e => e);
+        assert.include(allowanceFailAmount.decodedError, "ALLOWANCE_NOT_EXISTENT");
+        const get_allowance_after = await contract.methods.allowance({
+            from_account: ownerKeypair.publicKey,
+            for_account: otherKeypair.publicKey
+        });
+        assert.equal(get_allowance_after.decodedResult, 10);
     });
 
     it('Fungible Token Contract: Decrease Allowance below zero (should fail)', async () => {
@@ -148,7 +177,7 @@ describe('Fungible Token Full Contract', () => {
         const get_allowance_after = await contract.methods.allowance({
             from_account: wallets[0].publicKey,
             for_account: wallets[1].publicKey
-        }).catch(e => e);
+        });
         assert.equal(get_allowance_after.decodedResult, 10);
     });
 
@@ -160,12 +189,15 @@ describe('Fungible Token Full Contract', () => {
         const get_allowance_after = await contract.methods.allowance({
             from_account: wallets[0].publicKey,
             for_account: wallets[1].publicKey
-        }).catch(e => e);
+        });
         assert.equal(get_allowance_after.decodedResult, 0);
     });
 
     it('Fungible Token Contract: Swap', async () => {
         await contract.methods.mint(wallets[0].publicKey, 10);
+
+        const total_supply = await contract.methods.total_supply();
+        assert.equal(total_supply.decodedResult, 10);
         const swap = await contract.methods.swap();
         assert.equal(topicHashFromResult(swap), hashTopic('Swap'));
         assert.equal(Crypto.addressFromDecimal(swap.result.log[0].topics[1]), wallets[0].publicKey);
@@ -175,5 +207,11 @@ describe('Fungible Token Full Contract', () => {
         assert.equal(check_swap.decodedResult, 10);
         const balance = await contract.methods.balance(wallets[0].publicKey);
         assert.equal(balance.decodedResult, 0);
+
+        const total_supply_after = await contract.methods.total_supply();
+        assert.equal(total_supply_after.decodedResult, 0);
+
+        const swapped = await contract.methods.swapped();
+        assert.deepEqual(swapped.decodedResult, [[ownerKeypair.publicKey, 10]]);
     });
 });
