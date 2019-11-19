@@ -63,7 +63,7 @@ describe('Fungible Token Full Contract', () => {
 
     it('Fungible Token Contract: Return Extensions', async () => {
         const aex9Extensions = await contract.methods.aex9_extensions();
-        assert.deepEqual(aex9Extensions.decodedResult, ["allowances", "mintable", "burnable"]);
+        assert.deepEqual(aex9Extensions.decodedResult, ["allowances", "mintable", "burnable", "swappable"]);
     });
 
     it('Deploying Fungible Token Contract: Meta Information', async () => {
@@ -151,7 +151,7 @@ describe('Fungible Token Full Contract', () => {
         }).catch(e => e);
         assert.equal(get_allowance_before.decodedResult, 10);
 
-        const change_allowance = await contract.methods.change_allowance(otherKeypair.publicKey, 10).catch(e => e);
+        await contract.methods.change_allowance(otherKeypair.publicKey, 10).catch(e => e);
 
         const get_allowance_after = await contract.methods.allowance({
             from_account: ownerKeypair.publicKey,
@@ -177,7 +177,7 @@ describe('Fungible Token Full Contract', () => {
         }).catch(e => e);
         assert.equal(get_allowance_before.decodedResult, 10);
 
-        const change_allowance = await contract.methods.change_allowance(otherKeypair.publicKey, -5).catch(e => e);
+        await contract.methods.change_allowance(otherKeypair.publicKey, -5).catch(e => e);
 
         const get_allowance_after = await contract.methods.allowance({
             from_account: ownerKeypair.publicKey,
@@ -230,7 +230,7 @@ describe('Fungible Token Full Contract', () => {
         }).catch(e => e);
         assert.equal(get_allowance_before.decodedResult, 10);
 
-        const reset_allowance = await contract.methods.reset_allowance(otherKeypair.publicKey).catch(e => e);
+        await contract.methods.reset_allowance(otherKeypair.publicKey).catch(e => e);
 
         const get_allowance_after = await contract.methods.allowance({
             from_account: ownerKeypair.publicKey,
@@ -239,4 +239,16 @@ describe('Fungible Token Full Contract', () => {
         assert.equal(get_allowance_after.decodedResult, 0);
     });
 
+    it('Fungible Token Contract: Swap', async () => {
+        await contract.methods.mint(ownerKeypair.publicKey, 10);
+        const swap = await contract.methods.swap();
+        assert.equal(topicHashFromResult(swap), hashTopic('Swap'));
+        assert.equal(Crypto.addressFromDecimal(swap.result.log[0].topics[1]), ownerKeypair.publicKey);
+        assert.equal(swap.result.log[0].topics[2], 10);
+
+        const check_swap = await contract.methods.check_swap(ownerKeypair.publicKey);
+        assert.equal(check_swap.decodedResult, 10);
+        const balance = await contract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balance.decodedResult, 0);
+    });
 });
