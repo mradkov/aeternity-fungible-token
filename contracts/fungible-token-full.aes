@@ -100,6 +100,9 @@ contract FungibleTokenFull =
   entrypoint balance(owner: address) : option(int) =
     Map.lookup(owner, state.balances)
 
+  // Get all swapps stored in state
+  entrypoint swapped() : map(address, int) = state.swapped
+
   // Get the allowances state
   entrypoint allowances() : allowances =
     state.allowances
