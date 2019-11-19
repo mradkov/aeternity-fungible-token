@@ -92,6 +92,24 @@ describe('Fungible Token Full Contract', () => {
         assert.include(mintFailOwner.decodedError, 'ONLY_OWNER_CALL_ALLOWED');
     });
 
+    it('Fungible Token Contract: Burn Tokens', async () => {
+        const mint = await contract.methods.mint(ownerKeypair.publicKey, 10);
+
+        const burn = await contract.methods.burn(5);
+        assert.equal(topicHashFromResult(burn), hashTopic('Burn'));
+        assert.equal(Crypto.addressFromDecimal(burn.result.log[0].topics[1]), ownerKeypair.publicKey);
+        assert.equal(burn.result.log[0].topics[2], 5);
+        assert.equal(burn.result.returnType, 'ok');
+
+        const totalSupply = await contract.methods.total_supply();
+        assert.deepEqual(totalSupply.decodedResult, 5);
+        const balance = await contract.methods.balance(ownerKeypair.publicKey);
+        assert.equal(balance.decodedResult, 5);
+
+        const burnFailAmount = await contract.methods.burn(-10).catch(e => e);
+        assert.include(burnFailAmount.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
+    });
+
     it('Fungible Token Contract: Create Allowance', async () => {
         const create_allowance = await contract.methods.create_allowance(wallets[1].publicKey, 10);
         assert.equal(topicHashFromResult(create_allowance), hashTopic('Allowance'));
