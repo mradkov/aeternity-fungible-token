@@ -316,6 +316,9 @@ stateful entrypoint swap() : ()
 | parameter | type |
 | :--- | :--- |
 | value | int |
+| return | type |
+| :--- | :--- |
+| () | unit |
 
 ### check_swap\(\)
 
@@ -328,6 +331,21 @@ stateful entrypoint check_swap(account: address) : int
 | parameter | type |
 | :--- | :--- |
 | account | address |
+| return | type |
+| :--- | :--- |
+| int | int |
+
+### swapped\(\)
+
+This function returns all of the swapps that are stored in the contract's state. 
+
+```text
+stateful entrypoint swapped() : map(address, int)
+```
+
+| return | type |
+| :--- | :--- |
+| swapped | map(address, int) |
 
 ## Events
 
