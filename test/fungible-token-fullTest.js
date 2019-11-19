@@ -20,38 +20,36 @@ const Universal = require('@aeternity/aepp-sdk').Universal;
 const Crypto = require('@aeternity/aepp-sdk').Crypto;
 const Bytes = require('@aeternity/aepp-sdk/es/utils/bytes');
 const MemoryAccount = require('@aeternity/aepp-sdk').MemoryAccount;
-const Deployer = require('aeproject-lib').Deployer;
 const FUNGIBLE_TOKEN_FULL_SOURCE = utils.readFileRelative('./contracts/fungible-token-full.aes', 'utf-8');
 const blake2b = require('blake2b');
 
 describe('Fungible Token Full Contract', () => {
 
-    let deployer, contract;
-    let client;
+    let contract, client;
 
     before(async () => {
         client = await Universal({
-          url: "http://localhost:3001",
-          internalUrl: "http://localhost:3001/internal",
-          accounts: [
-              MemoryAccount({ keypair: wallets[0] }),
-              MemoryAccount({ keypair: wallets[1] }),
-              MemoryAccount({ keypair: wallets[2] }),
-              MemoryAccount({ keypair: wallets[3] })
-          ],
-          networkId: "ae_devnet",
-          compilerUrl: "http://localhost:3080"
+            url: "http://localhost:3001",
+            internalUrl: "http://localhost:3001/internal",
+            accounts: [
+                MemoryAccount({keypair: wallets[0]}),
+                MemoryAccount({keypair: wallets[1]}),
+                MemoryAccount({keypair: wallets[2]}),
+                MemoryAccount({keypair: wallets[3]})
+            ],
+            networkId: "ae_devnet",
+            compilerUrl: "http://localhost:3080"
         })
-      })
+    });
 
     const hashTopic = topic => blake2b(32).update(Buffer.from(topic)).digest('hex');
     const topicHashFromResult = result => Bytes.toBytes(result.result.log[0].topics[0], true).toString('hex');
-    
+
     beforeEach(async () => {
         contract = await client.getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE);
         const init = await contract.deploy(['AE Test Token', 0, 'AETT']);
         assert.equal(init.result.returnType, 'ok');
-    })
+    });
 
     it('Fungible Token Contract: Return Extensions', async () => {
         const aex9Extensions = await contract.methods.aex9_extensions();
@@ -91,7 +89,7 @@ describe('Fungible Token Full Contract', () => {
         const mintFailAmount = await contract.methods.mint(wallets[0].publicKey, -10).catch(e => e);
         assert.include(mintFailAmount.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
 
-        const mintFailOwner = await contract.methods.mint(wallets[1].publicKey, 10, { onAccount : wallets[1].publicKey }).catch(e => e);
+        const mintFailOwner = await contract.methods.mint(wallets[1].publicKey, 10, {onAccount: wallets[1].publicKey}).catch(e => e);
         assert.include(mintFailOwner.decodedError, 'ONLY_OWNER_CALL_ALLOWED');
     });
 
@@ -108,60 +106,60 @@ describe('Fungible Token Full Contract', () => {
     });
 
     it('Fungible Token Contract: Get Allowance', async () => {
-        const create_allowance = await contract.methods.create_allowance(wallets[1].publicKey, 10);
+        await contract.methods.create_allowance(wallets[1].publicKey, 10);
 
         const get_allowance = await contract.methods.allowance({
-            from_account    : wallets[0].publicKey,
-            for_account     : wallets[1].publicKey
+            from_account: wallets[0].publicKey,
+            for_account: wallets[1].publicKey
         }).catch(e => e);
         assert.equal(get_allowance.decodedResult, 10);
     });
 
     it('Fungible Token Contract: Increase Allowance', async () => {
-        const create_allowance = await contract.methods.create_allowance(wallets[1].publicKey, 10);
-        
+        await contract.methods.create_allowance(wallets[1].publicKey, 10);
+
         await contract.methods.change_allowance(wallets[1].publicKey, 10).catch(e => e);
 
         const get_allowance_after = await contract.methods.allowance({
-            from_account    : wallets[0].publicKey,
-            for_account     : wallets[1].publicKey
+            from_account: wallets[0].publicKey,
+            for_account: wallets[1].publicKey
         }).catch(e => e);
         assert.equal(get_allowance_after.decodedResult, 20);
     });
 
     it('Fungible Token Contract: Decrease Allowance', async () => {
-        const create_allowance = await contract.methods.create_allowance(wallets[1].publicKey, 10);
+        await contract.methods.create_allowance(wallets[1].publicKey, 10);
 
         await contract.methods.change_allowance(wallets[1].publicKey, -5).catch(e => e);
 
         const get_allowance_after = await contract.methods.allowance({
-            from_account    : wallets[0].publicKey,
-            for_account     : wallets[1].publicKey
+            from_account: wallets[0].publicKey,
+            for_account: wallets[1].publicKey
         }).catch(e => e);
         assert.equal(get_allowance_after.decodedResult, 5);
     });
 
     it('Fungible Token Contract: Decrease Allowance below zero (should fail)', async () => {
-        const create_allowance = await contract.methods.create_allowance(wallets[1].publicKey, 10);
+        await contract.methods.create_allowance(wallets[1].publicKey, 10);
 
         const change_allowance = await contract.methods.change_allowance(wallets[1].publicKey, -11).catch(e => e);
         assert.include(change_allowance.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
 
         const get_allowance_after = await contract.methods.allowance({
-            from_account    : wallets[0].publicKey,
-            for_account     : wallets[1].publicKey
+            from_account: wallets[0].publicKey,
+            for_account: wallets[1].publicKey
         }).catch(e => e);
         assert.equal(get_allowance_after.decodedResult, 10);
     });
 
     it('Fungible Token Contract: Reset Allowance', async () => {
-        const create_allowance = await contract.methods.create_allowance(wallets[1].publicKey, 10);
+        await contract.methods.create_allowance(wallets[1].publicKey, 10);
 
         await contract.methods.reset_allowance(wallets[1].publicKey).catch(e => e);
 
         const get_allowance_after = await contract.methods.allowance({
-            from_account    : wallets[0].publicKey,
-            for_account     : wallets[1].publicKey
+            from_account: wallets[0].publicKey,
+            for_account: wallets[1].publicKey
         }).catch(e => e);
         assert.equal(get_allowance_after.decodedResult, 0);
     });

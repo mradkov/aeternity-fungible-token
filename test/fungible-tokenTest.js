@@ -14,44 +14,37 @@
  *  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  *  PERFORMANCE OF THIS SOFTWARE.
  */
-const AeSDK = require('@aeternity/aepp-sdk');
 const Universal = require('@aeternity/aepp-sdk').Universal;
-const Crypto = require('@aeternity/aepp-sdk').Crypto;
 const Bytes = require('@aeternity/aepp-sdk/es/utils/bytes');
 const MemoryAccount = require('@aeternity/aepp-sdk').MemoryAccount;
-const Deployer = require('aeproject-lib').Deployer;
 const FUNGIBLE_TOKEN_SOURCE = utils.readFileRelative('./contracts/fungible-token.aes', 'utf-8');
 const FUNGIBLE_TOKEN_WITH_BALANCE_SOURCE = utils.readFileRelative('./contracts/examples/fungible-token-with-balance.aes', 'utf-8');
 const blake2b = require('blake2b');
 
 describe('Fungible Token Contract', () => {
 
-    let deployer, contract;
-    let client;
+    let contract, client;
 
     before(async () => {
         client = await Universal({
-          url: "http://localhost:3001",
-          internalUrl: "http://localhost:3001/internal",
-          accounts: [
-              MemoryAccount({ keypair: wallets[0] }),
-              MemoryAccount({ keypair: wallets[1] }),
-              MemoryAccount({ keypair: wallets[2] }),
-              MemoryAccount({ keypair: wallets[3] })
-          ],
-          networkId: "ae_devnet",
-          compilerUrl: "http://localhost:3080"
+            url: "http://localhost:3001",
+            internalUrl: "http://localhost:3001/internal",
+            accounts: [
+                MemoryAccount({keypair: wallets[0]}),
+                MemoryAccount({keypair: wallets[1]}),
+                MemoryAccount({keypair: wallets[2]}),
+                MemoryAccount({keypair: wallets[3]})
+            ],
+            networkId: "ae_devnet",
+            compilerUrl: "http://localhost:3080"
         })
-      })
+    });
 
-    const hashTopic = topic => blake2b(32).update(Buffer.from(topic)).digest('hex');
-    const topicHashFromResult = result => Bytes.toBytes(result.result.log[0].topics[0], true).toString('hex');
-    
     beforeEach(async () => {
         contract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
         const init = await contract.deploy(['AE Test Token', 0, 'AETT']);
         assert.equal(init.result.returnType, 'ok');
-    })
+    });
 
     it('Deploy Basic Token', async () => {
         contract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
@@ -97,10 +90,10 @@ describe('Fungible Token Contract', () => {
         const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
         assert.equal(deploy.result.returnType, 'ok');
 
-        const transfer = await deployTestContract.methods.transfer(wallets[1].publicKey, 42);
+        await deployTestContract.methods.transfer(wallets[1].publicKey, 42);
 
         const balanceOfOwner = await deployTestContract.methods.balance(wallets[0].publicKey);
-        assert.equal(balanceOfOwner.decodedResult, 58)
+        assert.equal(balanceOfOwner.decodedResult, 58);
 
         const balanceOfReceiver = await deployTestContract.methods.balance(wallets[1].publicKey);
         assert.equal(balanceOfReceiver.decodedResult, 42)
@@ -112,13 +105,13 @@ describe('Fungible Token Contract', () => {
         const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
         assert.equal(deploy.result.returnType, 'ok');
 
-        const transfer = await deployTestContract.methods.transfer(wallets[1].publicKey, -42).catch(e => e);
+        await deployTestContract.methods.transfer(wallets[1].publicKey, -42).catch(e => e);
 
         const balanceOfOwner = await deployTestContract.methods.balance(wallets[0].publicKey);
-        assert.equal(balanceOfOwner.decodedResult, 100)
+        assert.equal(balanceOfOwner.decodedResult, 100);
 
         const balanceOfReceiver = await deployTestContract.methods.balance(wallets[1].publicKey);
-        assert.equal(balanceOfReceiver.decodedResult, undefined)
+        assert.equal(balanceOfReceiver.decodedResult, undefined);
     });
 
     it('Transfer: should NOT go below zero', async () => {
@@ -129,13 +122,13 @@ describe('Fungible Token Contract', () => {
         assert.equal(deploy.result.returnType, 'ok');
 
         const transfer = await deployTestContract.methods.transfer(wallets[1].publicKey, 101).catch(e => e);
-        assert.include(transfer.decodedError, "ACCOUNT_INSUFFICIENT_BALANCE")
+        assert.include(transfer.decodedError, "ACCOUNT_INSUFFICIENT_BALANCE");
 
         const balanceOfOwner = await deployTestContract.methods.balance(wallets[0].publicKey);
-        assert.equal(balanceOfOwner.decodedResult, 100)
+        assert.equal(balanceOfOwner.decodedResult, 100);
 
         const balanceOfReceiver = await deployTestContract.methods.balance(wallets[1].publicKey);
-        assert.equal(balanceOfReceiver.decodedResult, undefined)
+        assert.equal(balanceOfReceiver.decodedResult, undefined);
     });
 
 });

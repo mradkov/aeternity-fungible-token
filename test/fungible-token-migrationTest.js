@@ -14,20 +14,17 @@
  *  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  *  PERFORMANCE OF THIS SOFTWARE.
  */
-const AeSDK = require('@aeternity/aepp-sdk');
 const Universal = require('@aeternity/aepp-sdk').Universal;
 const Crypto = require('@aeternity/aepp-sdk').Crypto;
 const Bytes = require('@aeternity/aepp-sdk/es/utils/bytes');
 const MemoryAccount = require('@aeternity/aepp-sdk').MemoryAccount;
-const Deployer = require('aeproject-lib').Deployer;
 const FUNGIBLE_TOKEN_FULL_SOURCE = utils.readFileRelative('./contracts/fungible-token-full.aes', 'utf-8');
 const FUNGIBLE_TOKEN_MIGRATION_SOURCE = utils.readFileRelative('./contracts/examples/fungible-token-migration.aes', 'utf-8');
 const blake2b = require('blake2b');
 
 describe('Fungible Token Migration Contract', () => {
 
-    let deployer, contract, migrationTokenContract;
-    let client;
+    let contract, migrationTokenContract, client;
 
     before(async () => {
         client = await Universal({
@@ -42,11 +39,11 @@ describe('Fungible Token Migration Contract', () => {
           networkId: "ae_devnet",
           compilerUrl: "http://localhost:3080"
         })
-      })
+      });
 
     const hashTopic = topic => blake2b(32).update(Buffer.from(topic)).digest('hex');
     const topicHashFromResult = result => Bytes.toBytes(result.result.log[0].topics[0], true).toString('hex');
-    
+
     it('Fungible Token Contract: Deploy token to be migrated', async () => {
         contract = await client.getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE);
         const deploy = await contract.deploy(['AE Test Token', 0, 'AETT']);
