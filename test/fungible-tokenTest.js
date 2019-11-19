@@ -84,6 +84,11 @@ describe('Fungible Token Contract', () => {
         assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
     });
 
+    it('Fungible Token Contract: return owner', async () => {
+        const owner = await contract.methods.owner();
+        assert.equal(owner.decodedResult, ownerKeypair.publicKey);
+    });
+
     it('Transfer: should have balance', async () => {
         let contractSource = utils.readFileRelative('./contracts/examples/fungible-token-with-balance.aes', 'utf-8');
         let deployTestContract = await owner.getContractInstance(contractSource);
@@ -103,6 +108,9 @@ describe('Fungible Token Contract', () => {
 
         const balance = await deployTestContract.methods.balance(ownerKeypair.publicKey);
         assert.equal(balance.decodedResult, 100);
+
+        const total_supply = await deployTestContract.methods.total_supply();
+        assert.equal(total_supply.decodedResult, 100);
     });
 
     it('Transfer: should transfer to other account', async () => {
@@ -125,13 +133,19 @@ describe('Fungible Token Contract', () => {
         const balance = await deployTestContract.methods.balance(ownerKeypair.publicKey);
         assert.equal(balance.decodedResult, 100);
 
-        const transfer = await deployTestContract.methods.transfer(otherKeypair.publicKey, 42);
+        await deployTestContract.methods.transfer(otherKeypair.publicKey, 42);
 
         const balanceOfOwner = await deployTestContract.methods.balance(ownerKeypair.publicKey);
-        assert.equal(balanceOfOwner.decodedResult, 58)
+        assert.equal(balanceOfOwner.decodedResult, 58);
 
         const balanceOfReceiver = await deployTestContract.methods.balance(otherKeypair.publicKey);
-        assert.equal(balanceOfReceiver.decodedResult, 42)
+        assert.equal(balanceOfReceiver.decodedResult, 42);
+
+        const total_supply = await deployTestContract.methods.total_supply();
+        assert.equal(total_supply.decodedResult, 100);
+
+        const balances = await deployTestContract.methods.balances();
+        assert.deepEqual(balances.decodedResult, [[ownerKeypair.publicKey, 58], [otherKeypair.publicKey, 42]]);
     });
 
     it('Transfer: should NOT transfer negative value', async () => {
@@ -152,16 +166,19 @@ describe('Fungible Token Contract', () => {
         assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
 
         const balance = await deployTestContract.methods.balance(ownerKeypair.publicKey);
-        assert.equal(balance.decodedResult, 100, "BALANCE_IS_NOT_MATCHING");
+        assert.equal(balance.decodedResult, 100);
 
         const transfer = await deployTestContract.methods.transfer(otherKeypair.publicKey, -42).catch(e => e);
-        assert.include(transfer.decodedError, "NON_NEGATIVE_VALUE_REQUIRED")
+        assert.include(transfer.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
 
         const balanceOfOwner = await deployTestContract.methods.balance(ownerKeypair.publicKey);
-        assert.equal(balanceOfOwner.decodedResult, 100)
+        assert.equal(balanceOfOwner.decodedResult, 100);
 
         const balanceOfReceiver = await deployTestContract.methods.balance(otherKeypair.publicKey);
-        assert.equal(balanceOfReceiver.decodedResult, undefined)
+        assert.equal(balanceOfReceiver.decodedResult, undefined);
+
+        const total_supply = await deployTestContract.methods.total_supply();
+        assert.equal(total_supply.decodedResult, 100);
     });
 
     it('Transfer: should NOT go below zero', async () => {
@@ -182,16 +199,16 @@ describe('Fungible Token Contract', () => {
         assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
 
         const balance = await deployTestContract.methods.balance(ownerKeypair.publicKey);
-        assert.equal(balance.decodedResult, 100, "BALANCE_IS_NOT_MATCHING");
+        assert.equal(balance.decodedResult, 100);
 
         const transfer = await deployTestContract.methods.transfer(otherKeypair.publicKey, 120).catch(e => e);
-        assert.include(transfer.decodedError, "ACCOUNT_INSUFFICIENT_BALANCE")
+        assert.include(transfer.decodedError, "ACCOUNT_INSUFFICIENT_BALANCE");
 
         const balanceOfOwner = await deployTestContract.methods.balance(ownerKeypair.publicKey);
-        assert.equal(balanceOfOwner.decodedResult, 100)
+        assert.equal(balanceOfOwner.decodedResult, 100);
 
         const balanceOfReceiver = await deployTestContract.methods.balance(otherKeypair.publicKey);
-        assert.equal(balanceOfReceiver.decodedResult, undefined)
+        assert.equal(balanceOfReceiver.decodedResult, undefined);
     });
 
 });
