@@ -337,6 +337,7 @@ stateful entrypoint check_swap(account: address) : int
 | parameter | type |
 | :--- | :--- |
 | account | address |
+
 | return | type |
 | :--- | :--- |
 | int | int |
