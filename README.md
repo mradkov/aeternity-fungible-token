@@ -147,7 +147,7 @@ This function allows transfer of `value` amount of tokens to `to_account` addres
 Note: Transfers of 0 values MUST be treated as normal transfers and fire the `Transfer` event.
 
 ```text
-stateful entrypoint transfer(to_account: address, value: int) : ()
+stateful entrypoint transfer(to_account: address, value: int) : unit
 ```
 
 | parameter | type |
@@ -187,7 +187,7 @@ Any extensions should be implementable without permission. Developers of extensi
 This function mints `value` new tokens to `account`. The function SHOULD abort if `Call.caller` is not the owner of the contract `state.owner`.
 
 ```text
-stateful entrypoint mint(account: address, value: int) : ()
+stateful entrypoint mint(account: address, value: int) : unit
 ```
 
 | parameter | type |
@@ -217,7 +217,7 @@ Mint(address, int)
 This function burns `value` of tokens from `Call.caller`. 
 
 ```text
-stateful entrypoint burn(value: int) : ()
+stateful entrypoint burn(value: int) : unit
 ```
 
 | parameter | type |
@@ -248,7 +248,7 @@ Allows `for_account` to withdraw from your account multiple times, up to the `va
 Note: To prevent attack vectors (like the ones possible in ERC20) clients SHOULD make sure to create user interfaces in such a way that they set the allowance first to 0 before setting it to another value for the same spender. THOUGH the contract itself shouldn't enforce it, to allow backwards compatibility with contracts deployed before.
 
 ```text
-stateful entrypoint create_allowance(for_account: address, value: int) : ()
+stateful entrypoint create_allowance(for_account: address, value: int) : unit
 ```
 
 | parameter | type |
@@ -315,12 +315,13 @@ Allowance(address, address, int)
 This function burns the whole balance of the `Call.caller` and stores the same amount in the `swapped` map. 
 
 ```text
-stateful entrypoint swap() : ()
+stateful entrypoint swap() : unit
 ```
 
 | parameter | type |
 | :--- | :--- |
 | value | int |
+
 | return | type |
 | :--- | :--- |
 | () | unit |
