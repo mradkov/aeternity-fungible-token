@@ -16,22 +16,22 @@ contract FungibleTokenFullInterface =
     | Mint(address, int)
     | Swap(address, int)
 
-  entrypoint aex9_extensions      : ()                      => list(string)
-  entrypoint meta_info            : ()                      => meta_info
-  entrypoint total_supply         : ()                      => int
-  entrypoint owner                : ()                      => address
-  entrypoint balances             : ()                      => map(address, int)
+  entrypoint aex9_extensions      : unit                    => list(string)
+  entrypoint meta_info            : unit                    => meta_info
+  entrypoint total_supply         : unit                    => int
+  entrypoint owner                : unit                    => address
+  entrypoint balances             : unit                    => map(address, int)
   entrypoint balance              : (address)               => option(int)
-  entrypoint transfer             : (address, int)          => ()
-  entrypoint allowances           : ()                      => allowances
+  entrypoint transfer             : (address, int)          => unit
+  entrypoint allowances           : unit                    => allowances
   entrypoint allowance            : (allowance_accounts)    => option(int)
   entrypoint allowance_for_caller : (address)               => option(int)
-  entrypoint transfer_allowance   : (address, address, int) => ()
-  entrypoint create_allowance     : (address, int)          => ()
-  entrypoint change_allowance     : (address, int)          => ()
-  entrypoint reset_allowance      : (address)               => ()
-  entrypoint burn                 : (int)                   => ()
-  entrypoint mint                 : (address, int)          => ()
-  entrypoint swap                 : ()                      => ()
+  entrypoint transfer_allowance   : (address, address, int) => unit
+  entrypoint create_allowance     : (address, int)          => unit
+  entrypoint change_allowance     : (address, int)          => unit
+  entrypoint reset_allowance      : (address)               => unit
+  entrypoint burn                 : (int)                   => unit
+  entrypoint mint                 : (address, int)          => unit
+  entrypoint swap                 : unit                    => unit
   entrypoint check_swap           : (address)               => int
-  entrypoint swapped              : ()                      => map(address, int)
+  entrypoint swapped              : unit                    => map(address, int)
