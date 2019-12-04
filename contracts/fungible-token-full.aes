@@ -97,8 +97,8 @@ contract FungibleTokenFull =
   // If the `owner` address haven't had any token balance
   // in this smart contract the return value is None
   // Otherwise Some(int) is returned with the current balance
-  entrypoint balance(owner: address) : option(int) =
-    Map.lookup(owner, state.balances)
+  entrypoint balance(account: address) : option(int) =
+    Map.lookup(account, state.balances)
 
   // Get all swapped tokens stored in state
   entrypoint swapped() : map(address, int) =
