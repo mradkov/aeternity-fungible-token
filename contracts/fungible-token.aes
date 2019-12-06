@@ -23,14 +23,14 @@
 /// @title - Fungible token basic
 contract FungibleToken =
 
-  // This defines the state of type record encapsulating the conract's mutable state
+  // This defines the state of type record encapsulating the contract's mutable state
   record state =
     { owner        : address      // the smart contract's owner address
     , total_supply : int          // total token supply
     , balances     : balances     // balances for each account
     , meta_info    : meta_info }  // token meta info (name, symbol, decimals)
 
-  // This is the meta information record type
+  // This is the meta-information record type
   record meta_info =
     { name     : string
     , symbol   : string

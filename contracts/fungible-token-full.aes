@@ -23,7 +23,7 @@
 /// @title - Fungible token with all the extensions - burn, mint, allowances
 contract FungibleTokenFull =
 
-  // This defines the state of type record encapsulating the conract's mutable state
+  // This defines the state of type record encapsulating the contract's mutable state
   record state =
     { owner        : address      // the smart contract's owner address
     , total_supply : int          // total token supply
@@ -32,7 +32,7 @@ contract FungibleTokenFull =
     , allowances   : allowances   // owner of account approves the transfer of an amount to another account
     , swapped      : map(address, int) }
 
-  // This is the meta information record type
+  // This is the meta-information record type
   record meta_info =
     { name     : string
     , symbol   : string
