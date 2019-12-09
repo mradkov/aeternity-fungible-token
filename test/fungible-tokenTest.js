@@ -18,7 +18,6 @@
 const Universal = require('@aeternity/aepp-sdk').Universal;
 const MemoryAccount = require('@aeternity/aepp-sdk').MemoryAccount;
 const FUNGIBLE_TOKEN_SOURCE = utils.readFileRelative('./contracts/fungible-token.aes', 'utf-8');
-const FUNGIBLE_TOKEN_WITH_BALANCE_SOURCE = utils.readFileRelative('./contracts/examples/fungible-token-with-balance.aes', 'utf-8');
 
 describe('Fungible Token Contract', () => {
 
@@ -41,14 +40,26 @@ describe('Fungible Token Contract', () => {
 
     beforeEach(async () => {
         contract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
-        const init = await contract.deploy(['AE Test Token', 0, 'AETT']);
+        const init = await contract.deploy(['AE Test Token', 0, 'AETT', undefined]);
         assert.equal(init.result.returnType, 'ok');
     });
 
     it('Deploy Basic Token', async () => {
         contract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
-        const deploy = await contract.deploy(['AE Test Token', 0, 'AETT']);
+        const deploy = await contract.deploy(['AE Test Token', 0, 'AETT', undefined]);
         assert.equal(deploy.result.returnType, 'ok');
+    });
+
+    it('Deploy Basic Token: With initial balance', async () => {
+        contract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
+        const deploy = await contract.deploy(['AE Test Token', 0, 'AETT', 15]);
+        assert.equal(deploy.result.returnType, 'ok');
+
+        const balance = await contract.methods.balance(wallets[0].publicKey);
+        assert.equal(balance.decodedResult, 15);
+
+        const total_supply = await contract.methods.total_supply();
+        assert.equal(total_supply.decodedResult, 15);
     });
 
     it('Fungible Token Contract: Return Extensions', async () => {
@@ -59,17 +70,17 @@ describe('Fungible Token Contract', () => {
     it('Deploying Fungible Token Contract: Meta Information', async () => {
         let deployTestContract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
 
-        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
+        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT', undefined]);
         assert.equal(deploy.result.returnType, 'ok');
         const metaInfo = await deployTestContract.methods.meta_info();
         assert.deepEqual(metaInfo.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 0});
 
-        const deployDecimals = await deployTestContract.deploy(['AE Test Token', 10, 'AETT']);
+        const deployDecimals = await deployTestContract.deploy(['AE Test Token', 10, 'AETT', undefined]);
         assert.equal(deployDecimals.result.returnType, 'ok');
         const metaInfoDecimals = await deployTestContract.methods.meta_info();
         assert.deepEqual(metaInfoDecimals.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 10});
 
-        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT']).catch(e => e);
+        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT', undefined]).catch(e => e);
         assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
     });
 
@@ -78,23 +89,10 @@ describe('Fungible Token Contract', () => {
         assert.equal(owner.decodedResult, wallets[0].publicKey);
     });
 
-    it('Transfer: should have balance', async () => {
-        let deployTestContract = await client.getContractInstance(FUNGIBLE_TOKEN_WITH_BALANCE_SOURCE);
-
-        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
-        assert.equal(deploy.result.returnType, 'ok');
-
-        const balance = await deployTestContract.methods.balance(wallets[0].publicKey);
-        assert.equal(balance.decodedResult, 100);
-
-        const total_supply = await deployTestContract.methods.total_supply();
-        assert.equal(total_supply.decodedResult, 100);
-    });
-
     it('Transfer: should transfer to other account', async () => {
-        let deployTestContract = await client.getContractInstance(FUNGIBLE_TOKEN_WITH_BALANCE_SOURCE);
+        let deployTestContract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
 
-        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
+        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT', 100]);
         assert.equal(deploy.result.returnType, 'ok');
 
         await deployTestContract.methods.transfer(wallets[1].publicKey, 42);
@@ -110,9 +108,9 @@ describe('Fungible Token Contract', () => {
     });
 
     it('Transfer: should NOT transfer negative value', async () => {
-        let deployTestContract = await client.getContractInstance(FUNGIBLE_TOKEN_WITH_BALANCE_SOURCE);
+        let deployTestContract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
 
-        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
+        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT', 100]);
         assert.equal(deploy.result.returnType, 'ok');
 
         const balanceOfOwner = await deployTestContract.methods.balance(wallets[0].publicKey);
@@ -129,10 +127,9 @@ describe('Fungible Token Contract', () => {
     });
 
     it('Transfer: should NOT go below zero', async () => {
+        let deployTestContract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
 
-        let deployTestContract = await client.getContractInstance(FUNGIBLE_TOKEN_WITH_BALANCE_SOURCE);
-
-        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
+        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT', 100]);
         assert.equal(deploy.result.returnType, 'ok');
 
         const transfer = await deployTestContract.methods.transfer(wallets[1].publicKey, 101).catch(e => e);

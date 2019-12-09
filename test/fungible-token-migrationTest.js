@@ -47,7 +47,7 @@ describe('Fungible Token Migration Contract', () => {
 
     it('Fungible Token Contract: Deploy token to be migrated', async () => {
         contract = await client.getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE);
-        const deploy = await contract.deploy(['AE Test Token', 0, 'AETT']);
+        const deploy = await contract.deploy(['AE Test Token', 0, 'AETT', undefined]);
         assert.equal(deploy.result.returnType, 'ok');
     });
 

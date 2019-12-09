@@ -46,7 +46,7 @@ describe('Fungible Token Full Contract', () => {
 
     beforeEach(async () => {
         contract = await client.getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE);
-        const init = await contract.deploy(['AE Test Token', 0, 'AETT']);
+        const init = await contract.deploy(['AE Test Token', 0, 'AETT', undefined]);
         assert.equal(init.result.returnType, 'ok');
     });
 
@@ -58,17 +58,17 @@ describe('Fungible Token Full Contract', () => {
     it('Deploying Fungible Token Contract: Meta Information', async () => {
         let deployTestContract = await client.getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE);
 
-        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT']);
+        const deploy = await deployTestContract.deploy(['AE Test Token', 0, 'AETT', undefined]);
         assert.equal(deploy.result.returnType, 'ok');
         const metaInfo = await deployTestContract.methods.meta_info();
         assert.deepEqual(metaInfo.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 0});
 
-        const deployDecimals = await deployTestContract.deploy(['AE Test Token', 10, 'AETT']);
+        const deployDecimals = await deployTestContract.deploy(['AE Test Token', 10, 'AETT', undefined]);
         assert.equal(deployDecimals.result.returnType, 'ok');
         const metaInfoDecimals = await deployTestContract.methods.meta_info();
         assert.deepEqual(metaInfoDecimals.decodedResult, {name: 'AE Test Token', symbol: 'AETT', decimals: 10});
 
-        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT']).catch(e => e);
+        const deployFail = await deployTestContract.deploy(['AE Test Token', -10, 'AETT', undefined]).catch(e => e);
         assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
     });
 
