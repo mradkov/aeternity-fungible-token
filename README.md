@@ -323,7 +323,7 @@ entrypoint allowance_for_caller(from_account: address) : option(int)
 
 ### change_allowance\(\)
 
-Allows to change the allowed spendable value for `for_account` with `value_change`
+This function allows the `Call.caller` to change the allowed spendable value for `for_account` with `value_change`. This adds the `value_change` to the current allowance value. If used for increasing allowance amount a positive value should be passed, if the desired outcome is to lower the value of the allowed spendable value a negative `value_change` should be passed.
 
 ```sophia
 stateful entrypoint change_allowance(for_account: address, value_change: int)
