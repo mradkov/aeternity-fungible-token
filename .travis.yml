@@ -8,4 +8,5 @@ script:
   - npm install -g aeproject
   - npm install
   - aeproject node
+  - aeproject compiler
   - aeproject test
