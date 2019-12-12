@@ -1,12 +1,12 @@
 -module(fungible_full_aes).
 
 -include_lib("eqc/include/eqc.hrl").
-%-include_lib("aebytecode/include/aeb_fate_data.hrl").
 
 -compile([export_all, nowarn_export_all]).
 -import(sophia_eqc, [gen_account/1,
                      fate_nat/0,
                      fate_int/0,
+                     fate_option/1,
                      caller/1,
                      creator/1]).
 
@@ -38,7 +38,7 @@ state_to_erlang(Fate) ->
 
 
 init_args(_ChainState) ->
-    [non_empty(string()), fate_nat(), non_empty(string())].
+    [non_empty(string()), fate_nat(), non_empty(string()), fate_option(fate_int())].
 
 
 %% Would be nice with a pretty printer fate representation -> Sophia
