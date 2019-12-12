@@ -52,6 +52,10 @@ describe('Fungible Token Contract', () => {
 
     it('Deploy Basic Token: With initial balance', async () => {
         contract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
+
+        const deployFail = await contract.deploy(['AE Test Token', 0, 'AETT', -15]).catch(e => e);
+        assert.include(deployFail.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
+
         const deploy = await contract.deploy(['AE Test Token', 0, 'AETT', 15]);
         assert.equal(deploy.result.returnType, 'ok');
 
