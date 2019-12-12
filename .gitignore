@@ -1,2 +1,6 @@
 node_modules
 .aeproject-store
+sophia_eqc.app
+fungible_aes.beam
+fungible_full_aes.beam
+sophia_eqc.erl

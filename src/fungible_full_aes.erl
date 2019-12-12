@@ -13,7 +13,7 @@
 -import(eqc_statem, [eq/2]).
 
 ct_file() ->
-    Ebin = filename:dir_name(code:which(sophia_eqc)),
+    Ebin = filename:dirname(code:which(sophia_eqc)),
     filename:join([Ebin, "..", "contracts", "fungible-token-full.aes"]).
 
 %% Assume we can generate the following from:
