@@ -35,6 +35,13 @@ state_to_erlang(Fate) ->
 init_args(_ChainState) ->
     [non_empty(string()), fate_nat(), non_empty(string()), fate_option(choose(-1,10))].
 
+init_post(_ChainState, #state{}, [_Name, _Decimals, _Symbol, InitialOwnerSupply], Res) ->
+  case Res of
+    {revert, "NON_NEGATIVE_VALUE_REQUIRED"} ->
+      InitialOwnerSupply =< 0;
+    {tuple, _} -> true;
+    _ -> eq(Res, ok)
+  end.
 
 %% Would be nice with a pretty printer fate representation -> Sophia
 %% 'None' or 'Some(9)'
