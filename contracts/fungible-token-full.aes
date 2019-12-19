@@ -140,15 +140,15 @@ contract FungibleTokenFull =
   // The execution will abort and fail if there is no allowance set up previous this call
   stateful entrypoint transfer_allowance(from_account: address, to_account: address, value: int) =
     let allowance_accounts = { from_account = from_account, for_account = Call.caller }
-    internal_change_allowance(allowance_accounts, -value)
     internal_transfer(from_account, to_account, value)
+    internal_change_allowance(allowance_accounts, -value)
 
   // Create allowance for `for_account` to withdraw from your account `Call.caller`,
   // multiple times, up to the `value` amount.
   // This function will abort and fail if called again when there is allowance
   // already set for these particular accounts pair.
   stateful entrypoint create_allowance(for_account: address, value: int) =
-    // Chcek if the passed value is not negative
+    // Check if the passed value is not negative
     require_non_negative_value(value)
     // Set the allowance account pair in the memory variable
     let allowance_accounts = { from_account =  Call.caller, for_account = for_account }

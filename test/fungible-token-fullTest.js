@@ -181,13 +181,20 @@ describe('Fungible Token Full Contract', () => {
     });
 
     it('Fungible Token Contract: Transfer Allowance (should fail)', async () => {
-        await contract.methods.create_allowance(wallets[1].publicKey, 10);
+        const allowanceFailBalance = await contract.methods.transfer_allowance(wallets[0].publicKey, wallets[1].publicKey, 15).catch(e => e);
+        assert.include(allowanceFailBalance.decodedError, "BALANCE_ACCOUNT_NOT_EXISTENT");
+
+        await contract.methods.mint(wallets[0].publicKey, 15);
+        const allowanceFailExistence = await contract.methods.transfer_allowance(wallets[0].publicKey, wallets[1].publicKey, 15).catch(e => e);
+        assert.include(allowanceFailExistence.decodedError, "ALLOWANCE_NOT_EXISTENT");
+
+        await contract.methods.create_allowance(wallets[0].publicKey, 10);
 
         const allowanceFailAmount = await contract.methods.transfer_allowance(wallets[0].publicKey, wallets[1].publicKey, 15).catch(e => e);
-        assert.include(allowanceFailAmount.decodedError, "ALLOWANCE_NOT_EXISTENT");
+        assert.include(allowanceFailAmount.decodedError, "NON_NEGATIVE_VALUE_REQUIRED");
         const get_allowance_after = await contract.methods.allowance({
             from_account: wallets[0].publicKey,
-            for_account: wallets[1].publicKey
+            for_account: wallets[0].publicKey
         });
         assert.equal(get_allowance_after.decodedResult, 10);
     });
@@ -237,5 +244,17 @@ describe('Fungible Token Full Contract', () => {
 
         const swapped = await contract.methods.swapped();
         assert.deepEqual(swapped.decodedResult, [[wallets[0].publicKey, 10]]);
+    });
+
+    it('Fungible Token Contract: Quickcheck Discovery 2: 0 Allowance X Transfer', async () => {
+        const total_supply = await contract.methods.total_supply();
+        assert.equal(total_supply.decodedResult, 0);
+
+        const create_allowance = await contract.methods.create_allowance(wallets[0].publicKey, 0);
+        assert.equal(create_allowance.result.returnType, 'ok');
+
+        // This would then return the error NON_NEGATIVE_VALUE_REQUIRED which didn't make sense in the case
+        const transfer_allowance = await contract.methods.transfer_allowance(wallets[0].publicKey, wallets[0].publicKey, 10).catch(e => e);
+        assert.include(transfer_allowance.decodedError, "BALANCE_ACCOUNT_NOT_EXISTENT");
     });
 });
