@@ -1,5 +1,7 @@
 # Aeternity Fungible Token
 
+[![Build Status](https://travis-ci.com/mradkov/aeternity-fungible-token.svg?branch=master)](https://travis-ci.com/mradkov/aeternity-fungible-token)
+
 This is an example reference implementation of the proposed aeternity fungible token standard (AEX-9).
 
 A Fungible token is a technical standard used for smart contracts on the blockchain for implementing tokens/digital assets. Fungible token defines a common list of rules for tokens to follow within the larger ecosystem, allowing developers to accurately predict interaction between tokens. These rules include how the tokens are transferred between addresses and how data within each token is accessed. Fungible tokens are interchangeable, divisible, and identical tokens that are useful as in various use-cases.
