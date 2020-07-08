@@ -43,8 +43,8 @@ The most important here are `transfer`, `balance` and the `Transfer` event.
 
 A standard interface allows any tokens to be re-used by other applications: from wallets to decentralized exchanges.
 
-- The following specification is following the ERC20 standart introduced in Ethereum for fungible tokens.
-- This standart is proven to be working and we think we can leverage of using it. It will also help us with interoperability and easier developers onboarding as the main differences will be Sophia syntax related.
+- The following specification is following the ERC20 standard introduced in Ethereum for fungible tokens.
+- This standard is proven to be working and we think we can leverage of using it. It will also help us with interoperability and easier developers onboarding as the main differences will be Sophia syntax related.
 
 ## Specification
 
