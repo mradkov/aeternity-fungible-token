@@ -1,4 +1,4 @@
-@compiler >= 4
+@compiler >= 5
 
 contract FungibleTokenFullInterface =
   record meta_info =
