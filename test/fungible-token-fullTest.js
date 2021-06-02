@@ -24,6 +24,8 @@ const {
 } = require('@aeternity/aepp-sdk');
 const blake2b = require('blake2b');
 
+const { defaultWallets: wallets } = require('../config/wallets.json');
+
 const FUNGIBLE_TOKEN_FULL_SOURCE = utils.readFileRelative(
   './contracts/fungible-token-full.aes',
   'utf-8',
@@ -63,7 +65,9 @@ describe('Fungible Token Full Contract', () => {
     Bytes.toBytes(result.result.log[0].topics[0], true).toString('hex');
 
   beforeEach(async () => {
-    contract = await client.getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE);
+    contract = await client
+      .getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE)
+      .catch(console.error);
     const init = await contract.deploy(['AE Test Token', 0, 'AETT', undefined]);
     assert.equal(init.result.returnType, 'ok');
   });
