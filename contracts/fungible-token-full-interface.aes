@@ -1,5 +1,3 @@
-@compiler >= 5
-
 contract FungibleTokenFullInterface =
   record meta_info =
     { name : string
