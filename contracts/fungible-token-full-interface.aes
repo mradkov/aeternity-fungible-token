@@ -1,4 +1,4 @@
-contract interface FungibleTokenFullInterface =
+contract FungibleTokenFullInterface =
   record meta_info =
     { name : string
     , symbol : string
