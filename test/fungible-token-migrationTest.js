@@ -41,7 +41,9 @@ describe('Fungible Token Migration Contract', () => {
     migrationTokenContract,
     client,
     contractContent,
-    contractFilesystem;
+    contractFilesystem,
+    migrationContractContent,
+    migrationContractFilesystem;
 
   before(async () => {
     const node = await Node({ url: NETWORKS[NETWORK_NAME].nodeUrl });
@@ -65,6 +67,15 @@ describe('Fungible Token Migration Contract', () => {
       contractContent = contractUtils.getContractContent(
         FUNGIBLE_TOKEN_FULL_SOURCE,
       );
+
+      // a filesystem object must be passed to the compiler if the contract uses custom includes
+      migrationContractFilesystem = contractUtils.getFilesystem(
+        FUNGIBLE_TOKEN_MIGRATION_SOURCE,
+      );
+      // get content of contract
+      migrationContractContent = contractUtils.getContractContent(
+        FUNGIBLE_TOKEN_MIGRATION_SOURCE,
+      );
     } catch (err) {
       console.error(err);
       assert.fail('Could not initialize contract instance');
@@ -77,14 +88,16 @@ describe('Fungible Token Migration Contract', () => {
     Bytes.toBytes(result.result.log[0].topics[0], true).toString('hex');
 
   it('Fungible Token Contract: Deploy token to be migrated', async () => {
-    contract = await client.getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE);
+    contract = await client.getContractInstance(contractContent, {
+      contractFilesystem,
+    });
     const deploy = await contract.deploy([
       'AE Test Token',
       0,
       'AETT',
       undefined,
     ]);
-    assert.equal(deploy.result.returnType, 'ok');
+    assert.equal(deploy.result.returnType, 'ok', 'Contract was not deployed.');
   });
 
   it('Fungible Token Contract: Return Extensions', async () => {
@@ -110,16 +123,17 @@ describe('Fungible Token Migration Contract', () => {
   });
 
   it('Migration Token: Initialize Token to be migrated to', async () => {
-    migrationTokenContract = await client.getContractInstance(
-      FUNGIBLE_TOKEN_MIGRATION_SOURCE,
-    );
-    const deploy = await migrationTokenContract.deploy([
-      'AE Test Token',
-      0,
-      'AETT',
-      contract.deployInfo.address,
-    ]);
-    assert.equal(deploy.result.returnType, 'ok');
+    migrationTokenContract = await client
+      .getContractInstance(migrationContractContent, {
+        contractFilesystem: migrationContractFilesystem,
+      })
+      .catch(console.error);
+
+    const deploy = await migrationTokenContract
+      .deploy(['AE Test Token', 0, 'AETT', contract.deployInfo.address])
+      .catch(console.error);
+
+    assert.equal(deploy.result.returnType, 'ok', 'Contract was not deployed.');
 
     const check_swap = await contract.methods.check_swap(wallets[0].publicKey);
     assert.equal(check_swap.decodedResult, 10);
@@ -135,21 +149,16 @@ describe('Fungible Token Migration Contract', () => {
   });
 
   it('Migration Token: User with no swapped tokens', async () => {
-    const otherContract = await client.getContractInstance(
-      FUNGIBLE_TOKEN_MIGRATION_SOURCE,
-      { contractAddress: migrationTokenContract.deployInfo.address },
-    );
-
-    const migrate = await otherContract.methods
+    const migrate = await migrationTokenContract.methods
       .migrate({ onAccount: wallets[1].publicKey })
       .catch((e) => e);
-    assert.include(migrate.decodedError, 'MIGRATION_AMOUNT_NOT_GREATER_ZERO');
+    assert.include(migrate.message, 'MIGRATION_AMOUNT_NOT_GREATER_ZERO');
   });
 
   it('Migration Token: User already migrated', async () => {
     const migrate = await migrationTokenContract.methods
       .migrate()
       .catch((e) => e);
-    assert.include(migrate.decodedError, 'ACCOUNT_ALREADY_MIGRATED');
+    assert.include(migrate.message, 'ACCOUNT_ALREADY_MIGRATED');
   });
 });
