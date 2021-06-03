@@ -14,6 +14,13 @@
  *  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  *  PERFORMANCE OF THIS SOFTWARE.
  */
+const chai = require('chai');
+const assert = chai.assert;
+
+const NETWORKS = require('../config/network.json');
+const NETWORK_NAME = 'local';
+
+const { defaultWallets: wallets } = require('../config/wallets.json');
 
 const {
   Universal,
@@ -24,39 +31,38 @@ const {
 } = require('@aeternity/aepp-sdk');
 const blake2b = require('blake2b');
 
-const { defaultWallets: wallets } = require('../config/wallets.json');
-
-const FUNGIBLE_TOKEN_FULL_SOURCE = utils.readFileRelative(
-  './contracts/fungible-token-full.aes',
-  'utf-8',
-);
-
-const config = {
-  url: 'http://localhost:3001/',
-  internalUrl: 'http://localhost:3001/',
-  compilerUrl: 'http://localhost:3080',
-};
+const contractUtils = require('../utils/contract-utils');
+const FUNGIBLE_TOKEN_FULL_SOURCE = './contracts/fungible-token-full.aes';
 
 describe('Fungible Token Full Contract', () => {
-  let contract, client;
+  let contract, client, contractContent, contractFilesystem;
 
   before(async () => {
+    const node = await Node({ url: NETWORKS[NETWORK_NAME].nodeUrl });
     client = await Universal({
-      nodes: [
-        {
-          name: 'devnetNode',
-          instance: await Node(config),
-        },
-      ],
+      nodes: [{ name: NETWORK_NAME, instance: node }],
+      compilerUrl: NETWORKS[NETWORK_NAME].compilerUrl,
       accounts: [
         MemoryAccount({ keypair: wallets[0] }),
         MemoryAccount({ keypair: wallets[1] }),
         MemoryAccount({ keypair: wallets[2] }),
         MemoryAccount({ keypair: wallets[3] }),
       ],
-      networkId: 'ae_devnet',
-      compilerUrl: config.compilerUrl,
+      address: wallets[0].publicKey,
     });
+    try {
+      // a filesystem object must be passed to the compiler if the contract uses custom includes
+      contractFilesystem = contractUtils.getFilesystem(
+        FUNGIBLE_TOKEN_FULL_SOURCE,
+      );
+      // get content of contract
+      contractContent = contractUtils.getContractContent(
+        FUNGIBLE_TOKEN_FULL_SOURCE,
+      );
+    } catch (err) {
+      console.error(err);
+      assert.fail('Could not initialize contract instance');
+    }
   });
 
   const hashTopic = (topic) =>
@@ -65,27 +71,27 @@ describe('Fungible Token Full Contract', () => {
     Bytes.toBytes(result.result.log[0].topics[0], true).toString('hex');
 
   beforeEach(async () => {
-    contract = await client
-      .getContractInstance(FUNGIBLE_TOKEN_FULL_SOURCE)
-      .catch(console.error);
+    // initialize the contract instance
+    contract = await client.getContractInstance(contractContent, {
+      contractFilesystem,
+    });
     const init = await contract.deploy(['AE Test Token', 0, 'AETT', undefined]);
-    assert.equal(init.result.returnType, 'ok');
+    assert.equal(init.result.returnType, 'ok', 'Contract was not deployed.');
   });
 
   it('Fungible Token Contract: Return Extensions', async () => {
     const aex9Extensions = await contract.methods.aex9_extensions();
-    assert.deepEqual(aex9Extensions.decodedResult, [
-      'allowances',
-      'mintable',
-      'burnable',
-      'swappable',
-    ]);
+    assert.deepEqual(
+      aex9Extensions.decodedResult,
+      ['allowances', 'mintable', 'burnable', 'swappable'],
+      'Contract extensions did not match.',
+    );
   });
 
   it('Deploying Fungible Token Contract: Meta Information', async () => {
-    let deployTestContract = await client.getContractInstance(
-      FUNGIBLE_TOKEN_FULL_SOURCE,
-    );
+    let deployTestContract = await client.getContractInstance(contractContent, {
+      contractFilesystem,
+    });
 
     const deploy = await deployTestContract.deploy([
       'AE Test Token',
@@ -93,13 +99,17 @@ describe('Fungible Token Full Contract', () => {
       'AETT',
       undefined,
     ]);
-    assert.equal(deploy.result.returnType, 'ok');
+    assert.equal(deploy.result.returnType, 'ok', 'Contract was not deployed.');
     const metaInfo = await deployTestContract.methods.meta_info();
-    assert.deepEqual(metaInfo.decodedResult, {
-      name: 'AE Test Token',
-      symbol: 'AETT',
-      decimals: 0,
-    });
+    assert.deepEqual(
+      metaInfo.decodedResult,
+      {
+        name: 'AE Test Token',
+        symbol: 'AETT',
+        decimals: 0,
+      },
+      'Meta info does not match.',
+    );
 
     const deployDecimals = await deployTestContract.deploy([
       'AE Test Token',
@@ -107,18 +117,26 @@ describe('Fungible Token Full Contract', () => {
       'AETT',
       undefined,
     ]);
-    assert.equal(deployDecimals.result.returnType, 'ok');
+    assert.equal(
+      deployDecimals.result.returnType,
+      'ok',
+      'Contract was not deployed.',
+    );
     const metaInfoDecimals = await deployTestContract.methods.meta_info();
-    assert.deepEqual(metaInfoDecimals.decodedResult, {
-      name: 'AE Test Token',
-      symbol: 'AETT',
-      decimals: 10,
-    });
+    assert.deepEqual(
+      metaInfoDecimals.decodedResult,
+      {
+        name: 'AE Test Token',
+        symbol: 'AETT',
+        decimals: 10,
+      },
+      'Meta info does not match.',
+    );
 
     const deployFail = await deployTestContract
       .deploy(['AE Test Token', -10, 'AETT', undefined])
       .catch((e) => e);
-    assert.include(deployFail.decodedError, 'NON_NEGATIVE_VALUE_REQUIRED');
+    assert.include(deployFail.message, 'NON_NEGATIVE_VALUE_REQUIRED');
   });
 
   it('Fungible Token Contract: Mint Tokens', async () => {
@@ -140,12 +158,14 @@ describe('Fungible Token Full Contract', () => {
     const mintFailAmount = await contract.methods
       .mint(wallets[0].publicKey, -10)
       .catch((e) => e);
-    assert.include(mintFailAmount.decodedError, 'NON_NEGATIVE_VALUE_REQUIRED');
+    assert.include(mintFailAmount.message, 'NON_NEGATIVE_VALUE_REQUIRED');
 
     const mintFailOwner = await contract.methods
-      .mint(wallets[1].publicKey, 10, { onAccount: wallets[1].publicKey })
+      .mint(wallets[1].publicKey, 10, {
+        onAccount: wallets[1].publicKey,
+      })
       .catch((e) => e);
-    assert.include(mintFailOwner.decodedError, 'ONLY_OWNER_CALL_ALLOWED');
+    assert.include(mintFailOwner.message, 'ONLY_OWNER_CALL_ALLOWED');
   });
 
   it('Fungible Token Contract: Burn Tokens', async () => {
@@ -166,7 +186,7 @@ describe('Fungible Token Full Contract', () => {
     assert.equal(balance.decodedResult, 5);
 
     const burnFailAmount = await contract.methods.burn(-10).catch((e) => e);
-    assert.include(burnFailAmount.decodedError, 'NON_NEGATIVE_VALUE_REQUIRED');
+    assert.include(burnFailAmount.message, 'NON_NEGATIVE_VALUE_REQUIRED');
   });
 
   it('Fungible Token Contract: Create Allowance', async () => {
@@ -189,10 +209,7 @@ describe('Fungible Token Full Contract', () => {
     const allowanceFailAmount = await contract.methods
       .create_allowance(wallets[1].publicKey, -10)
       .catch((e) => e);
-    assert.include(
-      allowanceFailAmount.decodedError,
-      'NON_NEGATIVE_VALUE_REQUIRED',
-    );
+    assert.include(allowanceFailAmount.message, 'NON_NEGATIVE_VALUE_REQUIRED');
   });
 
   it('Fungible Token Contract: Get Allowance', async () => {
@@ -276,7 +293,7 @@ describe('Fungible Token Full Contract', () => {
       .transfer_allowance(wallets[0].publicKey, wallets[1].publicKey, 15)
       .catch((e) => e);
     assert.include(
-      allowanceFailBalance.decodedError,
+      allowanceFailBalance.message,
       'BALANCE_ACCOUNT_NOT_EXISTENT',
     );
 
@@ -284,20 +301,15 @@ describe('Fungible Token Full Contract', () => {
     const allowanceFailExistence = await contract.methods
       .transfer_allowance(wallets[0].publicKey, wallets[1].publicKey, 15)
       .catch((e) => e);
-    assert.include(
-      allowanceFailExistence.decodedError,
-      'ALLOWANCE_NOT_EXISTENT',
-    );
+    assert.include(allowanceFailExistence.message, 'ALLOWANCE_NOT_EXISTENT');
 
     await contract.methods.create_allowance(wallets[0].publicKey, 10);
 
     const allowanceFailAmount = await contract.methods
       .transfer_allowance(wallets[0].publicKey, wallets[1].publicKey, 15)
       .catch((e) => e);
-    assert.include(
-      allowanceFailAmount.decodedError,
-      'NON_NEGATIVE_VALUE_REQUIRED',
-    );
+    assert.include(allowanceFailAmount.message, 'NON_NEGATIVE_VALUE_REQUIRED');
+
     const get_allowance_after = await contract.methods.allowance({
       from_account: wallets[0].publicKey,
       for_account: wallets[0].publicKey,
@@ -311,10 +323,7 @@ describe('Fungible Token Full Contract', () => {
     const change_allowance = await contract.methods
       .change_allowance(wallets[1].publicKey, -11)
       .catch((e) => e);
-    assert.include(
-      change_allowance.decodedError,
-      'NON_NEGATIVE_VALUE_REQUIRED',
-    );
+    assert.include(change_allowance.message, 'NON_NEGATIVE_VALUE_REQUIRED');
 
     const get_allowance_after = await contract.methods.allowance({
       from_account: wallets[0].publicKey,
@@ -376,9 +385,6 @@ describe('Fungible Token Full Contract', () => {
     const transfer_allowance = await contract.methods
       .transfer_allowance(wallets[0].publicKey, wallets[0].publicKey, 10)
       .catch((e) => e);
-    assert.include(
-      transfer_allowance.decodedError,
-      'BALANCE_ACCOUNT_NOT_EXISTENT',
-    );
+    assert.include(transfer_allowance.message, 'BALANCE_ACCOUNT_NOT_EXISTENT');
   });
 });
