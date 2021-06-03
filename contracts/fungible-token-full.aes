@@ -18,13 +18,13 @@
 // THIS IS NOT SECURITY AUDITED
 // DO NEVER USE THIS WITHOUT SECURITY AUDIT FIRST
 
-@compiler >= 5
+@compiler >= 6
 
 include "Option.aes"
 include "String.aes"
 
 /// @title - Fungible token with all the extensions - burn, mint, allowances
-contract FungibleTokenFull =
+main contract FungibleTokenFull =
 
   // This defines the state of type record encapsulating the contract's mutable state
   record state =
