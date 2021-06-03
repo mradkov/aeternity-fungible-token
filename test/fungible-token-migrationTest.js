@@ -14,7 +14,15 @@
  *  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  *  PERFORMANCE OF THIS SOFTWARE.
  */
+const chai = require('chai');
+const assert = chai.assert;
 
+const NETWORKS = require('../config/network.json');
+const NETWORK_NAME = 'local';
+
+const { defaultWallets: wallets } = require('../config/wallets.json');
+
+const contractUtils = require('../utils/contract-utils');
 const {
   Universal,
   Node,
@@ -24,41 +32,43 @@ const {
 } = require('@aeternity/aepp-sdk');
 const blake2b = require('blake2b');
 
-const FUNGIBLE_TOKEN_FULL_SOURCE = utils.readFileRelative(
-  './contracts/fungible-token-full.aes',
-  'utf-8',
-);
-const FUNGIBLE_TOKEN_MIGRATION_SOURCE = utils.readFileRelative(
-  './contracts/examples/fungible-token-migration.aes',
-  'utf-8',
-);
-
-const config = {
-  url: 'http://localhost:3001/',
-  internalUrl: 'http://localhost:3001/',
-  compilerUrl: 'http://localhost:3080',
-};
+const FUNGIBLE_TOKEN_FULL_SOURCE = './contracts/fungible-token-full.aes';
+const FUNGIBLE_TOKEN_MIGRATION_SOURCE =
+  './contracts/examples/fungible-token-migration.aes';
 
 describe('Fungible Token Migration Contract', () => {
-  let contract, migrationTokenContract, client;
+  let contract,
+    migrationTokenContract,
+    client,
+    contractContent,
+    contractFilesystem;
 
   before(async () => {
+    const node = await Node({ url: NETWORKS[NETWORK_NAME].nodeUrl });
     client = await Universal({
-      nodes: [
-        {
-          name: 'devnetNode',
-          instance: await Node(config),
-        },
-      ],
+      nodes: [{ name: NETWORK_NAME, instance: node }],
+      compilerUrl: NETWORKS[NETWORK_NAME].compilerUrl,
       accounts: [
         MemoryAccount({ keypair: wallets[0] }),
         MemoryAccount({ keypair: wallets[1] }),
         MemoryAccount({ keypair: wallets[2] }),
         MemoryAccount({ keypair: wallets[3] }),
       ],
-      networkId: 'ae_devnet',
-      compilerUrl: config.compilerUrl,
+      address: wallets[0].publicKey,
     });
+    try {
+      // a filesystem object must be passed to the compiler if the contract uses custom includes
+      contractFilesystem = contractUtils.getFilesystem(
+        FUNGIBLE_TOKEN_FULL_SOURCE,
+      );
+      // get content of contract
+      contractContent = contractUtils.getContractContent(
+        FUNGIBLE_TOKEN_FULL_SOURCE,
+      );
+    } catch (err) {
+      console.error(err);
+      assert.fail('Could not initialize contract instance');
+    }
   });
 
   const hashTopic = (topic) =>
