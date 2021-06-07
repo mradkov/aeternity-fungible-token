@@ -18,13 +18,15 @@
 // THIS IS NOT SECURITY AUDITED
 // DO NEVER USE THIS WITHOUT SECURITY AUDIT FIRST
 
-@compiler >= 4
+@compiler >= 6
 
-contract MigrateToken =
-  entrypoint check_swap : (address) => int
+include "String.aes"
+
+contract interface MigrateToken =
+  entrypoint check_swap : address => int
 
 /// @title - Fungible token example for migration
-contract FungibleTokenMigration =
+main contract FungibleTokenMigration =
 
   // This defines the state of type record encapsulating the conract's mutable state
   record state =

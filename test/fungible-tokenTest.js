@@ -14,68 +14,83 @@
  *  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  *  PERFORMANCE OF THIS SOFTWARE.
  */
+const chai = require('chai');
+const assert = chai.assert;
 
-const { Universal, MemoryAccount, Node } = require('@aeternity/aepp-sdk');
-const FUNGIBLE_TOKEN_SOURCE = utils.readFileRelative(
-  './contracts/fungible-token.aes',
-  'utf-8',
-);
+const NETWORKS = require('../config/network.json');
+const NETWORK_NAME = 'local';
 
-const config = {
-  url: 'http://localhost:3001/',
-  internalUrl: 'http://localhost:3001/',
-  compilerUrl: 'http://localhost:3080',
-};
+const { defaultWallets: wallets } = require('../config/wallets.json');
+
+const contractUtils = require('../utils/contract-utils');
+const { Universal, Node, MemoryAccount } = require('@aeternity/aepp-sdk');
+const FUNGIBLE_TOKEN_SOURCE = './contracts/fungible-token.aes';
 
 describe('Fungible Token Contract', () => {
-  let contract, client;
+  let contract, client, contractContent, contractFilesystem;
 
   before(async () => {
+    const node = await Node({ url: NETWORKS[NETWORK_NAME].nodeUrl });
     client = await Universal({
-      nodes: [
-        {
-          name: 'devnetNode',
-          instance: await Node(config),
-        },
-      ],
+      nodes: [{ name: NETWORK_NAME, instance: node }],
+      compilerUrl: NETWORKS[NETWORK_NAME].compilerUrl,
       accounts: [
         MemoryAccount({ keypair: wallets[0] }),
         MemoryAccount({ keypair: wallets[1] }),
         MemoryAccount({ keypair: wallets[2] }),
         MemoryAccount({ keypair: wallets[3] }),
       ],
-      networkId: 'ae_devnet',
-      compilerUrl: config.compilerUrl,
+      address: wallets[0].publicKey,
     });
+    try {
+      // a filesystem object must be passed to the compiler if the contract uses custom includes
+      contractFilesystem = contractUtils.getFilesystem(FUNGIBLE_TOKEN_SOURCE);
+      // get content of contract
+      contractContent = contractUtils.getContractContent(FUNGIBLE_TOKEN_SOURCE);
+      // initialize the contract instance
+      contract = await client.getContractInstance(contractContent, {
+        contractFilesystem,
+      });
+      const init = await contract.deploy([
+        'AE Test Token',
+        0,
+        'AETT',
+        undefined,
+      ]);
+      assert.equal(init.result.returnType, 'ok');
+    } catch (err) {
+      console.error(err);
+      assert.fail('Could not initialize contract instance');
+    }
   });
 
   beforeEach(async () => {
-    contract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
+    // initialize the contract instance
+    contract = await client.getContractInstance(contractContent, {
+      contractFilesystem,
+    });
     const init = await contract.deploy(['AE Test Token', 0, 'AETT', undefined]);
-    assert.equal(init.result.returnType, 'ok');
+    assert.equal(init.result.returnType, 'ok', 'Contract was not deployed.');
   });
 
   it('Deploy Basic Token', async () => {
-    contract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
     const deploy = await contract.deploy([
       'AE Test Token',
       0,
       'AETT',
       undefined,
     ]);
-    assert.equal(deploy.result.returnType, 'ok');
+    assert.equal(deploy.result.returnType, 'ok', 'Contract was not deployed.');
   });
 
   it('Deploy Basic Token: With initial balance', async () => {
-    contract = await client.getContractInstance(FUNGIBLE_TOKEN_SOURCE);
-
     const deployFail = await contract
       .deploy(['AE Test Token', 0, 'AETT', -15])
       .catch((e) => e);
-    assert.include(deployFail.decodedError, 'NON_NEGATIVE_VALUE_REQUIRED');
+    assert.include(deployFail.message, 'NON_NEGATIVE_VALUE_REQUIRED');
 
     const deploy = await contract.deploy(['AE Test Token', 0, 'AETT', 15]);
-    assert.equal(deploy.result.returnType, 'ok');
+    assert.equal(deploy.result.returnType, 'ok', 'Contract was not deployed.');
 
     const balance = await contract.methods.balance(wallets[0].publicKey);
     assert.equal(balance.decodedResult, 15);
@@ -90,9 +105,9 @@ describe('Fungible Token Contract', () => {
   });
 
   it('Deploying Fungible Token Contract: Meta Information', async () => {
-    let deployTestContract = await client.getContractInstance(
-      FUNGIBLE_TOKEN_SOURCE,
-    );
+    let deployTestContract = await client.getContractInstance(contractContent, {
+      contractFilesystem,
+    });
 
     const deploy = await deployTestContract.deploy([
       'AE Test Token',
@@ -100,7 +115,7 @@ describe('Fungible Token Contract', () => {
       'AETT',
       undefined,
     ]);
-    assert.equal(deploy.result.returnType, 'ok');
+    assert.equal(deploy.result.returnType, 'ok', 'Contract was not deployed.');
     const metaInfo = await deployTestContract.methods.meta_info();
     assert.deepEqual(metaInfo.decodedResult, {
       name: 'AE Test Token',
@@ -125,7 +140,7 @@ describe('Fungible Token Contract', () => {
     const deployFail = await deployTestContract
       .deploy(['AE Test Token', -10, 'AETT', undefined])
       .catch((e) => e);
-    assert.include(deployFail.decodedError, 'NON_NEGATIVE_VALUE_REQUIRED');
+    assert.include(deployFail.message, 'NON_NEGATIVE_VALUE_REQUIRED');
   });
 
   it('Fungible Token Contract: return owner', async () => {
@@ -134,9 +149,9 @@ describe('Fungible Token Contract', () => {
   });
 
   it('Transfer: should transfer to other account', async () => {
-    let deployTestContract = await client.getContractInstance(
-      FUNGIBLE_TOKEN_SOURCE,
-    );
+    let deployTestContract = await client.getContractInstance(contractContent, {
+      contractFilesystem,
+    });
 
     const deploy = await deployTestContract.deploy([
       'AE Test Token',
@@ -164,9 +179,9 @@ describe('Fungible Token Contract', () => {
   });
 
   it('Transfer: should NOT transfer negative value', async () => {
-    let deployTestContract = await client.getContractInstance(
-      FUNGIBLE_TOKEN_SOURCE,
-    );
+    let deployTestContract = await client.getContractInstance(contractContent, {
+      contractFilesystem,
+    });
 
     const deploy = await deployTestContract.deploy([
       'AE Test Token',
@@ -184,7 +199,7 @@ describe('Fungible Token Contract', () => {
     const transfer = await deployTestContract.methods
       .transfer(wallets[1].publicKey, -42)
       .catch((e) => e);
-    assert.include(transfer.decodedError, 'NON_NEGATIVE_VALUE_REQUIRED');
+    assert.include(transfer.message, 'NON_NEGATIVE_VALUE_REQUIRED');
 
     const balanceOfReceiver = await deployTestContract.methods.balance(
       wallets[1].publicKey,
@@ -196,9 +211,9 @@ describe('Fungible Token Contract', () => {
   });
 
   it('Transfer: should NOT go below zero', async () => {
-    let deployTestContract = await client.getContractInstance(
-      FUNGIBLE_TOKEN_SOURCE,
-    );
+    let deployTestContract = await client.getContractInstance(contractContent, {
+      contractFilesystem,
+    });
 
     const deploy = await deployTestContract.deploy([
       'AE Test Token',
@@ -211,7 +226,7 @@ describe('Fungible Token Contract', () => {
     const transfer = await deployTestContract.methods
       .transfer(wallets[1].publicKey, 101)
       .catch((e) => e);
-    assert.include(transfer.decodedError, 'ACCOUNT_INSUFFICIENT_BALANCE');
+    assert.include(transfer.message, 'ACCOUNT_INSUFFICIENT_BALANCE');
 
     const balanceOfOwner = await deployTestContract.methods.balance(
       wallets[0].publicKey,
