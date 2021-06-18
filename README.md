@@ -1,6 +1,6 @@
 # Aeternity Fungible Token
 
-[![Build Status](https://travis-ci.com/mradkov/aeternity-fungible-token.svg?branch=master)](https://travis-ci.com/mradkov/aeternity-fungible-token)
+![Build Status](https://github.com/mradkov/aeternity-fungible-token/actions/workflows/main.yml/badge.svg?branch=master)
 
 This is an example reference implementation of the proposed aeternity fungible token standard (AEX-9).
 
