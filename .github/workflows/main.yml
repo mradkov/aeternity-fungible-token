@@ -18,5 +18,5 @@ jobs:
           node-version: 14.x
       - run: npm install -g @aeternity/aeproject
       - run: npm ci
-      - run: aeproject env
+      - run: aeproject env --nodeVersion v6.3.0 --compilerVersion v6.0.2
       - run: aeproject test
